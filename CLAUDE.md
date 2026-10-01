@@ -11,6 +11,13 @@ Vite の学習を目的として、テトリスをステップごとに作るプ
 
 作業は `docs/plan.md` のステップ順に進める。ステップが終わったら、表の「状態」列を更新する。仕様を変えたときは `docs/spec.md` も合わせて直す。
 
+## 学習のための約束（`docs/plan.md` の「進め方」も参照）
+
+- **`src/game/` のロジック、型定義、カスタムフックの中心部分は学習者が書く。** Claude はここを完成させず、関数のシグネチャ・テスト・`TODO(human)` を用意して学習者に渡す。雛形・CSS・設定ファイル・テストの土台は Claude が書いてよい。
+- 状態管理ライブラリや CSS フレームワークなど、新しい依存は学習者が理由を説明できるまで追加しない。
+- 学習メモ（`docs/notes/step-N.md`）は学習者が自分で書く。Claude は代わりに書かず、ステップを終えるときに書いたかどうかを確認する。
+- Git: 最初のコミット以外は、ブランチ `step-N/<内容>` → PR → `main` にマージ、の順で進める。ステップが完了したら `step-N` タグを付ける。
+
 ## コマンド
 
 ```sh
@@ -36,6 +43,8 @@ Vite 8 + React 19 + TypeScript で作り、描画は DOM（CSS Grid）で行う�
 
 ## TypeScript の設定で注意すること（`tsconfig.app.json`）
 
+- TS 6 なので、`strict` は書いていなくてもデフォルトで有効になっている。
+- `noUncheckedIndexedAccess`: `field[y][x]` の型は `Cell | undefined` になる。範囲外は `field[y]?.[x]` のように扱う。「範囲外は壁として扱う」という衝突判定のルールを、型で表すために有効にしている。
 - `verbatimModuleSyntax`: 型だけを import するときは `import type` を使う必要がある。
 - `erasableSyntaxOnly`: `enum` や `namespace` は使えない。ミノの種類などは union 型や `as const` で表す。
 - `allowImportingTsExtensions`: `import App from './App.tsx'` のように拡張子を付けて import する書き方が使われている。
