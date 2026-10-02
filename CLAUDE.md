@@ -16,7 +16,7 @@ Vite の学習を目的として、テトリスをステップごとに作るプ
 - **`src/game/` のロジック、型定義、カスタムフックの中心部分は学習者が書く。** Claude はここを完成させず、関数のシグネチャ・テスト・`TODO(human)` を用意して学習者に渡す。雛形・CSS・設定ファイル・テストの土台は Claude が書いてよい。
 - 状態管理ライブラリや CSS フレームワークなど、新しい依存は学習者が理由を説明できるまで追加しない。
 - 学習メモ（`docs/notes/step-N.md`）は学習者が自分で書く。Claude は代わりに書かず、ステップを終えるときに書いたかどうかを確認する。
-- Git: 最初のコミット以外は、ブランチ `step-N/<内容>` → PR → `main` にマージ、の順で進める。ステップが完了したら `step-N` タグを付ける。
+- Git: 最初のコミット以外は、ブランチ `step-N/<内容>` → PR → `main` にマージ、の順で進める。
 
 ## コマンド
 
@@ -49,3 +49,9 @@ Vite 8 + React 19 + TypeScript で作り、描画は DOM（CSS Grid）で行う�
 - `erasableSyntaxOnly`: `enum` や `namespace` は使えない。ミノの種類などは union 型や `as const` で表す。
 - `allowImportingTsExtensions`: `import App from './App.tsx'` のように拡張子を付けて import する書き方が使われている。
 - `noUnusedLocals` / `noUnusedParameters` が有効なので、使っていない変数や引数があるとビルドが失敗する。
+
+## Git ルール
+
+- main にコミット禁止。PR を作る。
+- コミットタイトルに Issue 番号をつける。（ex: \`デザインを適用(#8)\`）
+- ステップ完了時にタグは付けない。

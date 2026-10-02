@@ -27,7 +27,7 @@ MVP（遊べるテトリス）は **Step 5 まで**。
 | Step | 作るもの | React / TS で学ぶこと | Vite で学ぶこと | 状態 |
 |---|---|---|---|---|
 | 0 | `create-vite`（react-ts）で雛形を作り、不要なファイルを消す | — | プロジェクト構成、入口になる `index.html`、dev server | 完了 |
-| 1 | 固定データのフィールドを CSS Grid で表示する | コンポーネント、`Cell[][]` の型設計 | ES Modules、HMR、`vite.config.ts` のパスエイリアス（`@/`） | 未着手 |
+| 1 | 固定データのフィールドを CSS Grid で表示する | コンポーネント、`Cell[][]` の型設計 | ES Modules、HMR、`vite.config.ts` のパスエイリアス（`@/`） | 完了 |
 | 2 | ミノを 1 つ表示し、キーで左右・下に動かす | `useReducer`、キーボードイベント、union 型と `as const` | HMR で state が残る場合とリセットされる場合 | 未着手 |
 | 3 | 衝突判定・シンプル回転 | 純粋関数、`noUncheckedIndexedAccess` での配列アクセス | **Vitest の導入**（Vite の設定をそのまま使う）、TDD | 未着手 |
 | 4 | 自動落下・固定・次のミノの出現 | `requestAnimationFrame`、`useEffect` の後片付け、StrictMode で effect が 2 回動く問題、stale closure | 環境変数（`import.meta.env.DEV`、`.env`）でデバッグ表示を切り替える | 未着手 |
@@ -65,8 +65,6 @@ MVP（遊べるテトリス）は **Step 5 まで**。
 ### Git の運用
 
 - ステップごとにブランチ（`step-N/<内容>`）を切り、PR を作ってから `main` にマージする。
-- ステップが完了したら、`main` のマージコミットに `step-N` のタグを付ける。
-- `git diff step-2 step-3` で、そのステップで増えたものを見返せる。
 
 ### 学習メモ
 

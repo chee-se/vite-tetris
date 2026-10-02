@@ -17,3 +17,28 @@ body {
   display: grid;
   place-items: center;
 }
+
+.board {
+  --cell-size: 28px;
+
+  display: grid;
+  grid-template-columns: repeat(10, var(--cell-size));
+  grid-template-rows: repeat(20, var(--cell-size));
+  gap: 1px;
+  padding: 1px;
+  background: #2a2a44;
+  border: 2px solid #55557a;
+}
+
+.cell {
+  background: #11111f;
+}
+
+/* data-cell の値（ミノの種類）で色を変える */
+.cell[data-cell='1'] { background: #00bcd4; } /* I: シアン */
+.cell[data-cell='2'] { background: #ffd600; } /* O: 黄 */
+.cell[data-cell='3'] { background: #9c27b0; } /* T: 紫 */
+.cell[data-cell='4'] { background: #4caf50; } /* S: 緑 */
+.cell[data-cell='5'] { background: #f44336; } /* Z: 赤 */
+.cell[data-cell='6'] { background: #2962ff; } /* J: 青 */
+.cell[data-cell='7'] { background: #ff9800; } /* L: オレンジ */
