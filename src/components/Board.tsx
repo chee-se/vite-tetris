@@ -1,4 +1,4 @@
-import type { Field } from '../game/types.ts'
+import type { Field } from '@/game/types.ts'
 
 type Props = {
   field: Field

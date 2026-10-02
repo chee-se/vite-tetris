@@ -1,5 +1,5 @@
-import Board from './components/Board.tsx'
-import { createSampleField } from './game/field.ts'
+import Board from '@/components/Board.tsx'
+import { createSampleField } from '@/game/field.ts'
 
 const field = createSampleField()
 
