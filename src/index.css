@@ -35,10 +35,31 @@ body {
 }
 
 /* data-cell の値（ミノの種類）で色を変える */
-.cell[data-cell='1'] { background: #00bcd4; } /* I: シアン */
-.cell[data-cell='2'] { background: #ffd600; } /* O: 黄 */
-.cell[data-cell='3'] { background: #9c27b0; } /* T: 紫 */
-.cell[data-cell='4'] { background: #4caf50; } /* S: 緑 */
-.cell[data-cell='5'] { background: #f44336; } /* Z: 赤 */
-.cell[data-cell='6'] { background: #2962ff; } /* J: 青 */
-.cell[data-cell='7'] { background: #ff9800; } /* L: オレンジ */
+/* I: シアン */
+.cell[data-cell='1'] {
+  background: #00bcd4;
+}
+/* O: 黄 */
+.cell[data-cell='2'] {
+  background: #ffd600;
+}
+/* T: 紫 */
+.cell[data-cell='3'] {
+  background: #9c27b0;
+}
+/* S: 緑 */
+.cell[data-cell='4'] {
+  background: #4caf50;
+}
+/* Z: 赤 */
+.cell[data-cell='5'] {
+  background: #f44336;
+}
+/* J: 青 */
+.cell[data-cell='6'] {
+  background: #2962ff;
+}
+/* L: オレンジ */
+.cell[data-cell='7'] {
+  background: #ff9800;
+}
