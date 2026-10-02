@@ -49,3 +49,8 @@ Vite 8 + React 19 + TypeScript で作り、描画は DOM（CSS Grid）で行う�
 - `erasableSyntaxOnly`: `enum` や `namespace` は使えない。ミノの種類などは union 型や `as const` で表す。
 - `allowImportingTsExtensions`: `import App from './App.tsx'` のように拡張子を付けて import する書き方が使われている。
 - `noUnusedLocals` / `noUnusedParameters` が有効なので、使っていない変数や引数があるとビルドが失敗する。
+
+## Git ルール
+
+- main にコミット禁止。PR を作る。
+- コミットタイトルに Issue 番号をつける。（ex: \`デザインを適用(#8)\`）
