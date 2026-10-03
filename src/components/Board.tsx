@@ -1,4 +1,4 @@
-import { SHAPES } from '@/game/tetrominoes.ts'
+import { getShape } from '@/game/piece.ts'
 import type { Field, Piece } from '@/game/types.ts'
 
 type Props = {
@@ -10,8 +10,7 @@ type Props = {
 // 元の field は書き換えない（ミノの位置は state の current だけが持つ）
 function overlay(field: Field, piece: Piece): Field {
   const result = field.map((row) => [...row])
-  // 回転（piece.rotation）は Step 3 で反映する
-  SHAPES[piece.type].forEach((shapeRow, dy) => {
+  getShape(piece).forEach((shapeRow, dy) => {
     shapeRow.forEach((cell, dx) => {
       const row = result[piece.y + dy]
       const x = piece.x + dx

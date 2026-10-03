@@ -8,9 +8,10 @@ export type Field = Cell[][]
 export const PIECE_TYPES = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'] as const
 export type PieceType = (typeof PIECE_TYPES)[number]
 
+export type Rotation = 0 | 1 | 2 | 3
 export type Piece = {
   type: PieceType
-  rotation: 0 | 1 | 2 | 3
+  rotation: Rotation
   x: number
   y: number
 }
