@@ -3,7 +3,7 @@
 ## 分かったこと
 - `typeof` で値を型の文脈で扱う
   - 値: `const TYPES = ['left', 'right', 'down']` as const
-  - リテラル型: const type Type = `typeof TYPES // typeof は変数名にしか効かない`
+  - readonlyタプル型:  type Type = `typeof TYPES // typeof は変数名にしか効かない`
   - 数値でリテラル型を取り出して和型: `typeof ['left', 'right', 'down'][number]`
   - mapped type型を経由して、オブジェクト型の和型に変形: `{[T in ObjType]: {key: T}}[ObjType]`
 - useEffect: 副作用。React の外とのやりとり
