@@ -26,11 +26,12 @@ npm run build    # tsc -b で型チェック → vite build
 npm run lint     # oxlint（ESLint ではない）
 npm run fmt      # oxfmt で整形（fmt:check は確認だけ）。Markdown は対象外
 npm run preview  # ビルド結果をローカルで配信
+npm test         # Vitest（watch モード。1 回だけなら npx vitest run）
 ```
 
 Vite は型を外すだけで型チェックはしない。型エラーを確認するには `npx tsc -b`（または `npm run build`）を実行する。
 
-テストはまだない。Vitest は Step 3 で導入する予定。
+テストは Vitest で、`src/game/*.test.ts` に置く。Vitest は `vite.config.ts` をそのまま読むので、`@/` のエイリアスも使える。Vitest も型チェックはしないので、テストが通っても `tsc -b` は別に実行する。
 
 ## アーキテクチャの方針
 
