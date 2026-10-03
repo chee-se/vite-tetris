@@ -1,5 +1,18 @@
 import { SHAPES } from './tetrominoes.ts'
-import type { Field, Piece, Cell } from './types.ts'
+import type { Field, Piece, Cell, Rotation } from './types.ts'
+
+export const ROTATION_RIGHT: Record<Rotation, Rotation> = {
+  0: 1,
+  1: 2,
+  2: 3,
+  3: 0,
+}
+export const ROTATION_LEFT: Record<Rotation, Rotation> = {
+  0: 3,
+  1: 0,
+  2: 1,
+  3: 2,
+}
 
 // 形を時計回りに 90° 回したものを、新しい配列として返す（元の shape は書き換えない）
 export function rotateClockwise(shape: Field): Field {

@@ -16,6 +16,12 @@ describe('reducer: 移動', () => {
     expect(reducer(state, { type: 'down' }).current.y).toBe(1)
   })
 
+  test('移動しても向きは変わらない', () => {
+    const state = stateWith({ type: 'T', rotation: 2, x: 3, y: 5 })
+    expect(reducer(state, { type: 'left' }).current.rotation).toBe(2)
+    expect(reducer(state, { type: 'down' }).current.rotation).toBe(2)
+  })
+
   test('壁にぶつかるなら動かない', () => {
     const state = stateWith({ type: 'T', rotation: 0, x: 0, y: 0 })
     expect(reducer(state, { type: 'left' }).current).toEqual(state.current)
