@@ -1,4 +1,6 @@
-import type { Cell, Field } from './types.ts'
+import { getShape } from './piece.ts'
+import { SHAPES } from './tetrominoes.ts'
+import type { Cell, Field, Piece, PieceType } from './types.ts'
 
 export const FIELD_WIDTH = 10
 export const FIELD_HEIGHT = 20
@@ -23,4 +25,23 @@ export function createSampleField(): Field {
     field[FIELD_HEIGHT - bottom.length + i] = row
   })
   return field
+}
+
+// ミノをフィールドに書き込んだ、新しいフィールドを返す（元の field は書き換えない）。
+// 形の空きマス（0）は書き込まない。呼び出す側は、ミノが衝突していないことを確認してから呼ぶ
+export function lockPiece(field: Field, piece: Piece): Field {
+  const { x, y } = piece
+  const shape = getShape(piece)
+  const pieceCellAt = (fx: number, fy: number): Cell =>
+    shape[fy - y]?.[fx - x] ?? 0
+
+  return field.map((row, fy) =>
+    row.map((cell, fx) => pieceCellAt(fx, fy) || cell),
+  )
+}
+
+// 新しいミノを、フィールド上部の中央（箱の幅で左右をそろえる）に出す
+export function spawnPiece(type: PieceType): Piece {
+  const size = SHAPES[type].length
+  return { type, rotation: 0, x: Math.floor((FIELD_WIDTH - size) / 2), y: 0 }
 }

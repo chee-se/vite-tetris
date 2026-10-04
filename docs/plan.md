@@ -30,7 +30,7 @@ MVP（遊べるテトリス）は **Step 5 まで**。
 | 1 | 固定データのフィールドを CSS Grid で表示する | コンポーネント、`Cell[][]` の型設計 | ES Modules、HMR、`vite.config.ts` のパスエイリアス（`@/`） | 完了 |
 | 2 | ミノを 1 つ表示し、キーで左右・下に動かす | `useReducer`、キーボードイベント、union 型と `as const` | HMR で state が残る場合とリセットされる場合 | 完了 |
 | 3 | 衝突判定・シンプル回転 | 純粋関数、`noUncheckedIndexedAccess` での配列アクセス | **Vitest の導入**（Vite の設定をそのまま使う）、TDD | 完了 |
-| 4 | 自動落下・固定・次のミノの出現 | `requestAnimationFrame`、`useEffect` の後片付け、StrictMode で effect が 2 回動く問題、stale closure | 環境変数（`import.meta.env.DEV`、`.env`）でデバッグ表示を切り替える | 未着手 |
+| 4 | 自動落下・固定・次のミノの出現 | `requestAnimationFrame`、`useEffect` の後片付け、StrictMode で effect が 2 回動く問題、stale closure | 環境変数（`import.meta.env.DEV`、`.env`）でデバッグ表示を切り替える | 完了 |
 | 5 | ライン消去・スコア・レベル・ゲームオーバー | 状態遷移の設計（判別可能な union 型） | — | 未着手 |
 | 6 | NEXT 表示・タイトル / 一時停止画面・見た目の調整 | コンポーネントの分割 | CSS Modules、静的アセット（`public/` と `import` の違い） | 未着手 |
 | 7 | 発展要素（7-bag、ゴースト、ホールド、SRS など） | 好きなものを選んで追加する | 自作プラグイン（任意） | 未着手 |

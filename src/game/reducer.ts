@@ -1,5 +1,5 @@
-import { createSampleField } from './field.ts'
-import type { Field, Piece } from './types.ts'
+import { createSampleField, lockPiece, spawnPiece } from './field.ts'
+import type { Field, Piece, PieceType } from './types.ts'
 import { collides, ROTATION_LEFT, ROTATION_RIGHT } from './piece.ts'
 
 // Step 2 で必要な分だけ。score や status は Step 4〜5 で足す（spec.md の D を参照）
@@ -13,6 +13,7 @@ export const initialState: GameState = {
   current: { type: 'T', rotation: 0, x: 3, y: 0 },
 }
 
+// キー入力から送る action。引数を持たない
 export const ACTION_TYPES = [
   'left',
   'right',
@@ -21,31 +22,46 @@ export const ACTION_TYPES = [
   'rotateLeft',
 ] as const
 export type ActionType = (typeof ACTION_TYPES)[number]
-export type Action = { [K in ActionType]: { type: K } }[ActionType]
-export function reducer(state: GameState, action: Action): GameState {
-  const current: Piece = { ...state.current }
+// tick はゲームループから送る。乱数は reducer の外で選び、nextType として渡す（reducer を純粋に保つため）
+export type Action =
+  | { [K in ActionType]: { type: K } }[ActionType]
+  | { type: 'tick'; nextType: PieceType }
 
+export function reducer(state: GameState, action: Action): GameState {
+  const { field, current } = state
+  const moved = movePiece(current, action)
+  if (!collides(field, moved)) return { ...state, current: moved }
+  if (action.type !== 'tick') return state
+  return {
+    ...state,
+    field: lockPiece(field, current),
+    current: spawnPiece(action.nextType),
+  }
+}
+
+function movePiece(current: Piece, action: Action): Piece {
+  const moved = { ...current }
   switch (action.type) {
     case 'left':
-      current.x += -1
+      moved.x += -1
       break
     case 'right':
-      current.x += 1
+      moved.x += 1
       break
     case 'down':
-      current.y += 1
+      moved.y += 1
       break
     case 'rotateRight':
-      current.rotation = ROTATION_RIGHT[current.rotation]
+      moved.rotation = ROTATION_RIGHT[moved.rotation]
       break
     case 'rotateLeft':
-      current.rotation = ROTATION_LEFT[current.rotation]
+      moved.rotation = ROTATION_LEFT[moved.rotation]
+      break
+    case 'tick':
+      moved.y += 1
       break
     default:
       action satisfies never
   }
-
-  if (!collides(state.field, current)) return { ...state, current }
-
-  return state
+  return moved
 }

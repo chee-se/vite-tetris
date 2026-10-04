@@ -63,3 +63,24 @@ body {
 .cell[data-cell='7'] {
   background: #ff9800;
 }
+
+/* 開発用のデバッグ表示 */
+.debug {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 12px;
+  margin: 12px 0 0;
+  padding: 8px 12px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  background: #11111f;
+  border: 1px dashed #55557a;
+}
+
+.debug dt {
+  color: #9a9ab8;
+}
+
+.debug dd {
+  margin: 0;
+}
