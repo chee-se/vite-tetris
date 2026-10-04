@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { createEmptyField } from '@/game/field.ts'
+import { createEmptyField, lockPiece, spawnPiece } from '@/game/field.ts'
 import { reducer, type GameState } from '@/game/reducer.ts'
 import type { Piece } from '@/game/types.ts'
 
@@ -62,10 +62,53 @@ describe('reducer: 回転', () => {
   })
 })
 
+describe('reducer: tick', () => {
+  test('下に動けるなら 1 マス落ちる。フィールドは変わらない', () => {
+    const state = stateWith({ type: 'T', rotation: 0, x: 3, y: 5 })
+    const next = reducer(state, { type: 'tick', nextType: 'O' })
+    expect(next.current).toEqual({ ...state.current, y: 6 })
+    expect(next.field).toBe(state.field)
+  })
+
+  test('下に動けないなら、その位置で固定する', () => {
+    const state = stateWith({ type: 'T', rotation: 0, x: 3, y: 18 })
+    const next = reducer(state, { type: 'tick', nextType: 'O' })
+    expect(next.field).toEqual(lockPiece(state.field, state.current))
+  })
+
+  test('固定したら、nextType のミノが出現位置に出る', () => {
+    const state = stateWith({ type: 'T', rotation: 0, x: 3, y: 18 })
+    const next = reducer(state, { type: 'tick', nextType: 'O' })
+    expect(next.current).toEqual(spawnPiece('O'))
+  })
+
+  test('固定ブロックの上に着地しても固定する', () => {
+    const field = createEmptyField()
+    field[10]![4] = 1 // T の 2 行目の真下
+    const state = stateWith({ type: 'T', rotation: 0, x: 3, y: 8 }, field)
+    const next = reducer(state, { type: 'tick', nextType: 'I' })
+    expect(next.field[9]).toEqual([0, 0, 0, 3, 3, 3, 0, 0, 0, 0])
+    expect(next.current).toEqual(spawnPiece('I'))
+  })
+
+  test('↓ キー（down）では、着地しても固定しない', () => {
+    const state = stateWith({ type: 'T', rotation: 0, x: 3, y: 18 })
+    expect(reducer(state, { type: 'down' })).toBe(state)
+  })
+})
+
 test('元の state を書き換えない', () => {
   const state = stateWith({ type: 'T', rotation: 0, x: 3, y: 0 })
   const before = structuredClone(state)
   reducer(state, { type: 'right' })
   reducer(state, { type: 'rotateRight' })
+  reducer(state, { type: 'tick', nextType: 'I' })
+  reducer(
+    { ...state, current: { ...state.current, y: 18 } },
+    {
+      type: 'tick',
+      nextType: 'I',
+    },
+  )
   expect(state).toEqual(before)
 })
