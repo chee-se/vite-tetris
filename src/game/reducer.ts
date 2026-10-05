@@ -1,6 +1,6 @@
 import { createEmptyField, lockPiece, spawnPiece, clearLines } from './field.ts'
 import type { Field, Piece, PieceType } from './types.ts'
-import { collides, ROTATION_LEFT, ROTATION_RIGHT } from './piece.ts'
+import { collides, dropToLand, ROTATION_LEFT, ROTATION_RIGHT } from './piece.ts'
 import { lineClearScore, levelFor } from './score.ts'
 
 type Common = {
@@ -165,14 +165,6 @@ function lockAndSpawn(
     status,
     cleared,
   }
-}
-
-function dropToLand(field: Field, piece: Piece): Piece {
-  const result = { ...piece }
-  while (!collides(field, { ...result, y: result.y + 1 })) {
-    result.y += 1
-  }
-  return result
 }
 
 function createInitialState(current: PieceType, next: PieceType): GameState {

@@ -46,3 +46,13 @@ export function collides(field: Field, piece: Piece): boolean {
     row.some((cell, dx) => isCollision(cell, x + dx, y + dy)),
   )
 }
+
+// piece をそのまま真下に落としたとき、最後に止まる位置にあるミノ。元の piece は書き換えない。
+// ハードドロップとゴースト（着地予定の位置）を表すにも使う。
+export function dropToLand(field: Field, piece: Piece): Piece {
+  const result = { ...piece }
+  while (!collides(field, { ...result, y: result.y + 1 })) {
+    result.y += 1
+  }
+  return result
+}
