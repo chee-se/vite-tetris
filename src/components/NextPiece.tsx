@@ -10,6 +10,7 @@ type Props = {
 // 次に出るミノを表示する
 function NextPiece({ type }: Props) {
   const shape = SHAPES[type]
+  const trimmedShape = shape.filter((row) => row.some((cell) => cell !== 0))
   return (
     <section className={styles.next}>
       <h2 className={styles.label}>NEXT</h2>
@@ -20,7 +21,7 @@ function NextPiece({ type }: Props) {
             gridTemplateColumns: `repeat(${shape.length}, var(--cell-size))`,
           }}
         >
-          {shape.map((row, y) =>
+          {trimmedShape.map((row, y) =>
             row.map((cell, x) => (
               <Cell cell={cell} blank={true} key={`${y}-${x}`} />
             )),
