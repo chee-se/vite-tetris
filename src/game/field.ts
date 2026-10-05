@@ -5,10 +5,12 @@ import type { Cell, Field, Piece, PieceType } from './types.ts'
 export const FIELD_WIDTH = 10
 export const FIELD_HEIGHT = 20
 
+function createEmptyRow(): Cell[] {
+  return Array.from({ length: FIELD_WIDTH }, (): Cell => 0)
+}
+
 export function createEmptyField(): Field {
-  return Array.from({ length: FIELD_HEIGHT }, () =>
-    Array.from({ length: FIELD_WIDTH }, (): Cell => 0),
-  )
+  return Array.from({ length: FIELD_HEIGHT }, () => createEmptyRow())
 }
 
 // Step 1 の表示確認用の固定データ。下の数行にブロックが積まれた状態
@@ -38,6 +40,16 @@ export function lockPiece(field: Field, piece: Piece): Field {
   return field.map((row, fy) =>
     row.map((cell, fx) => pieceCellAt(fx, fy) || cell),
   )
+}
+
+// そろった行（空きマスが 1 つもない行）を消し、上の行を下にずらしたフィールドと、消した行数を返す。
+// 元の field は書き換えない。返すフィールドも FIELD_HEIGHT 行のまま
+export function clearLines(field: Field): { field: Field; cleared: number } {
+  const remaining = field.filter((row) => row.includes(0))
+  const cleared = FIELD_HEIGHT - remaining.length
+  const empties = Array.from({ length: cleared }, () => createEmptyRow())
+
+  return { field: [...empties, ...remaining], cleared }
 }
 
 // 新しいミノを、フィールド上部の中央（箱の幅で左右をそろえる）に出す

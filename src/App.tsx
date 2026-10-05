@@ -20,7 +20,10 @@ function App() {
   return (
     <main className="app">
       <h1>Vite Tetris</h1>
-      <Board field={state.field} current={state.current} />
+      <Board
+        field={state.field}
+        current={state.status === 'playing' ? state.current : undefined}
+      />
       {SHOW_DEBUG && <DebugPanel state={state} />}
     </main>
   )
