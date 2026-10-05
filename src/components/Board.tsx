@@ -3,7 +3,8 @@ import type { Field, Piece } from '@/game/types.ts'
 
 type Props = {
   field: Field
-  current: Piece
+  // ゲームオーバー中は落下中のミノがないので、渡さない
+  current?: Piece
 }
 
 // 固定済みのフィールドに落下中のミノを重ねた、描画用のコピーを作る。
@@ -26,7 +27,7 @@ function overlay(field: Field, piece: Piece): Field {
 function Board({ field, current }: Props) {
   return (
     <div className="board">
-      {overlay(field, current).map((row, y) =>
+      {(current ? overlay(field, current) : field).map((row, y) =>
         row.map((cell, x) => (
           <div className="cell" data-cell={cell} key={`${y}-${x}`} />
         )),
