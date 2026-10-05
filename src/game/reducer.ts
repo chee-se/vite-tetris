@@ -9,6 +9,11 @@ import type { Field, Piece, PieceType } from './types.ts'
 import { collides, ROTATION_LEFT, ROTATION_RIGHT } from './piece.ts'
 import { lineClearScore, levelFor } from './score.ts'
 
+// TODO(human): Step 6 の状態遷移を追加する（テストは reducer.test.ts）
+// - Common に next: PieceType を足し、Status に 'title' と 'paused' を加える
+// - createTitleState(next) を export し、initialState をタイトル画面にする
+// - Action: restart を start に改名（title / gameover から開始）、引数なしの pause を足す
+// - 出現は常に state.next のミノ。action.nextType は新しい next になる
 type Common = {
   field: Field
   score: number

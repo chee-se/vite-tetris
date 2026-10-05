@@ -1,17 +1,25 @@
 import { describe, expect, test } from 'vitest'
 import { createEmptyField, lockPiece, spawnPiece } from '@/game/field.ts'
-import { reducer, type Action, type GameState } from '@/game/reducer.ts'
-import type { Piece } from '@/game/types.ts'
+import {
+  createTitleState,
+  reducer,
+  type Action,
+  type GameState,
+} from '@/game/reducer.ts'
+import type { Piece, PieceType } from '@/game/types.ts'
 
 type PlayingState = Extract<GameState, { status: 'playing' }>
 
+// next の既定値は 'O'。着地したテストでは O が出現する
 const stateWith = (
   current: Piece,
   field = createEmptyField(),
+  next: PieceType = 'O',
 ): PlayingState => ({
   status: 'playing',
   field,
   current,
+  next,
   score: 0,
   lines: 0,
   level: 1,
@@ -91,17 +99,31 @@ describe('reducer: tick', () => {
     expect(next.field).toEqual(lockPiece(state.field, state.current))
   })
 
-  test('固定したら、nextType のミノが出現位置に出る', () => {
-    const state = stateWith({ type: 'T', rotation: 0, x: 3, y: 18 })
-    const next = play(state, { type: 'tick', nextType: 'O' })
-    expect(next.current).toEqual(spawnPiece('O'))
+  test('固定したら、state.next のミノが出現位置に出て、nextType が新しい next になる', () => {
+    const state = stateWith(
+      { type: 'T', rotation: 0, x: 3, y: 18 },
+      undefined,
+      'S',
+    )
+    const next = play(state, { type: 'tick', nextType: 'Z' })
+    expect(next.current).toEqual(spawnPiece('S'))
+    expect(next.next).toBe('Z')
+  })
+
+  test('固定しないうちは next が変わらない', () => {
+    const state = stateWith(
+      { type: 'T', rotation: 0, x: 3, y: 5 },
+      undefined,
+      'S',
+    )
+    expect(play(state, { type: 'tick', nextType: 'Z' }).next).toBe('S')
   })
 
   test('固定ブロックの上に着地しても固定する', () => {
     const field = createEmptyField()
     field[10]![4] = 1 // T の 2 行目の真下
-    const state = stateWith({ type: 'T', rotation: 0, x: 3, y: 8 }, field)
-    const next = play(state, { type: 'tick', nextType: 'I' })
+    const state = stateWith({ type: 'T', rotation: 0, x: 3, y: 8 }, field, 'I')
+    const next = play(state, { type: 'tick', nextType: 'O' })
     expect(next.field[9]).toEqual([0, 0, 0, 3, 3, 3, 0, 0, 0, 0])
     expect(next.current).toEqual(spawnPiece('I'))
   })
@@ -214,31 +236,101 @@ describe('reducer: ドロップの得点', () => {
   })
 })
 
-describe('reducer: リスタート', () => {
-  test('ゲームオーバーから restart すると、空のフィールドで最初から始まる', () => {
-    const field = createEmptyField()
-    field[19]![0] = 1
-    const state: GameState = {
-      status: 'gameover',
-      field,
-      score: 1200,
-      lines: 12,
-      level: 2,
-    }
-    const next = play(state, { type: 'restart', nextType: 'L' })
-    expect(next).toEqual({
-      status: 'playing',
+describe('reducer: タイトルとスタート', () => {
+  test('タイトル画面の state は空のフィールドで、渡したミノが next になる', () => {
+    expect(createTitleState('J')).toEqual({
+      status: 'title',
       field: createEmptyField(),
-      current: spawnPiece('L'),
+      next: 'J',
       score: 0,
       lines: 0,
       level: 1,
     })
   })
 
-  test('プレイ中の restart は何もしない', () => {
+  test('タイトルから start すると、next のミノが出て、nextType が新しい next になる', () => {
+    const next = play(createTitleState('J'), { type: 'start', nextType: 'L' })
+    expect(next).toEqual({
+      status: 'playing',
+      field: createEmptyField(),
+      current: spawnPiece('J'),
+      next: 'L',
+      score: 0,
+      lines: 0,
+      level: 1,
+    })
+  })
+
+  test('タイトル中は start 以外の action で state が変わらない', () => {
+    const state = createTitleState('J')
+    expect(reducer(state, { type: 'left' })).toBe(state)
+    expect(reducer(state, { type: 'tick', nextType: 'O' })).toBe(state)
+    expect(reducer(state, { type: 'pause' })).toBe(state)
+  })
+
+  test('ゲームオーバーから start すると、空のフィールドで最初から始まる', () => {
+    const field = createEmptyField()
+    field[19]![0] = 1
+    const state: GameState = {
+      status: 'gameover',
+      field,
+      next: 'T',
+      score: 1200,
+      lines: 12,
+      level: 2,
+    }
+    const next = play(state, { type: 'start', nextType: 'L' })
+    expect(next).toEqual({
+      status: 'playing',
+      field: createEmptyField(),
+      current: spawnPiece('T'),
+      next: 'L',
+      score: 0,
+      lines: 0,
+      level: 1,
+    })
+  })
+
+  test('プレイ中の start は何もしない', () => {
     const state = stateWith({ type: 'T', rotation: 0, x: 3, y: 5 })
-    expect(reducer(state, { type: 'restart', nextType: 'L' })).toBe(state)
+    expect(reducer(state, { type: 'start', nextType: 'L' })).toBe(state)
+  })
+})
+
+describe('reducer: 一時停止', () => {
+  test('プレイ中に pause すると paused になり、ミノの位置はそのまま', () => {
+    const state = stateWith({ type: 'T', rotation: 1, x: 3, y: 5 })
+    const paused = reducer(state, { type: 'pause' })
+    expect(paused).toEqual({ ...state, status: 'paused' })
+  })
+
+  test('paused でもう一度 pause すると、同じ状態でプレイに戻る', () => {
+    const state = stateWith({ type: 'T', rotation: 1, x: 3, y: 5 })
+    const resumed = reducer(reducer(state, { type: 'pause' }), {
+      type: 'pause',
+    })
+    expect(resumed).toEqual(state)
+  })
+
+  test('paused 中は移動も落下もしない', () => {
+    const paused = reducer(stateWith({ type: 'T', rotation: 0, x: 3, y: 5 }), {
+      type: 'pause',
+    })
+    expect(reducer(paused, { type: 'left' })).toBe(paused)
+    expect(reducer(paused, { type: 'tick', nextType: 'O' })).toBe(paused)
+    expect(reducer(paused, { type: 'hardDrop', nextType: 'O' })).toBe(paused)
+    expect(reducer(paused, { type: 'start', nextType: 'O' })).toBe(paused)
+  })
+
+  test('ゲームオーバー中の pause は何もしない', () => {
+    const { current: _, ...rest } = stateWith({
+      type: 'T',
+      rotation: 0,
+      x: 3,
+      y: 5,
+    })
+    const state: GameState = { ...rest, status: 'gameover' }
+    expect(reducer(state, { type: 'pause' })).toBe(state)
   })
 })
 
