@@ -1,10 +1,4 @@
-import {
-  createSampleField,
-  createEmptyField,
-  lockPiece,
-  spawnPiece,
-  clearLines,
-} from './field.ts'
+import { createEmptyField, lockPiece, spawnPiece, clearLines } from './field.ts'
 import type { Field, Piece, PieceType } from './types.ts'
 import { collides, ROTATION_LEFT, ROTATION_RIGHT } from './piece.ts'
 import { lineClearScore, levelFor } from './score.ts'
@@ -23,11 +17,6 @@ type Status =
   | { status: 'title' }
 export type GameState = Common & Status
 
-export const initialState: GameState = {
-  ...createInitialState('T', 'L'),
-  field: createSampleField(),
-}
-
 // キー入力から送る action。引数を持たない
 export const ACTION_TYPES = [
   'left',
@@ -43,8 +32,9 @@ export type Action =
   | { [K in ActionType]: { type: K } }[ActionType]
   | { type: 'tick'; nextType: PieceType }
   | { type: 'hardDrop'; nextType: PieceType }
-  // Enter キーで送る。ゲームオーバーから新しいゲームを始める
+  // Enter キーで送る。タイトルかゲームオーバーから新しいゲームを始める
   | { type: 'start'; nextType: PieceType }
+  // P / Esc キーで送る。プレイ中と一時停止を切り替える
   | { type: 'pause' }
 
 export function createTitleState(next: PieceType): GameState {

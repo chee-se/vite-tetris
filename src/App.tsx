@@ -1,8 +1,9 @@
 import { useReducer } from 'react'
 import Board from '@/components/Board.tsx'
 import DebugPanel from '@/components/DebugPanel.tsx'
-import { initialState, reducer } from '@/game/reducer.ts'
+import { createTitleState, reducer } from '@/game/reducer.ts'
 import { dropIntervalMs } from '@/game/score.ts'
+import { randomPieceType } from '@/game/tetrominoes.ts'
 import { useGameLoop } from '@/hooks/useGameLoop.ts'
 import { useKeyboard } from '@/hooks/useKeyboard.ts'
 
@@ -11,7 +12,11 @@ import { useKeyboard } from '@/hooks/useKeyboard.ts'
 const SHOW_DEBUG = import.meta.env.DEV && import.meta.env.VITE_DEBUG === 'true'
 
 function App() {
-  const [state, dispatch] = useReducer(reducer, initialState)
+  // 第 3 引数の初期化関数は最初の 1 回だけ呼ばれる。
+  // 乱数で next を選ぶので、定数の initialState ではなく関数で作る
+  const [state, dispatch] = useReducer(reducer, undefined, () =>
+    createTitleState(randomPieceType()),
+  )
   useKeyboard(dispatch)
   useGameLoop(dispatch, dropIntervalMs(state.level), state.status === 'playing')
 
@@ -22,8 +27,24 @@ function App() {
         <div className="board-wrap">
           <Board
             field={state.field}
-            current={state.status === 'playing' ? state.current : undefined}
+            current={
+              state.status === 'playing' || state.status === 'paused'
+                ? state.current
+                : undefined
+            }
           />
+          {state.status === 'title' && (
+            <div className="overlay">
+              <p className="overlay-title">TETRIS</p>
+              <p>Enter でスタート</p>
+            </div>
+          )}
+          {state.status === 'paused' && (
+            <div className="overlay">
+              <p className="overlay-title">PAUSE</p>
+              <p>P / Esc で再開</p>
+            </div>
+          )}
           {state.status === 'gameover' && (
             <div className="overlay">
               <p className="overlay-title">GAME OVER</p>
