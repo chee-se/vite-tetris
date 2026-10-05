@@ -10,6 +10,7 @@ import { randomPieceType } from '@/game/tetrominoes.ts'
 import { useGameLoop } from '@/hooks/useGameLoop.ts'
 import { useKeyboard } from '@/hooks/useKeyboard.ts'
 import styles from './App.module.css'
+import logo from '@/assets/logo.svg'
 
 // import.meta.env.DEV は、vite build のときに false という定数に置き換わる。
 // そのため本番ビルドでは条件全体が false になり、DebugPanel はバンドルから取り除かれる
@@ -18,9 +19,9 @@ const SHOW_DEBUG = import.meta.env.DEV && import.meta.env.VITE_DEBUG === 'true'
 // status ごとにフィールドへ重ねる表示。playing のときは何も重ねない
 const OVERLAYS: Record<
   Exclude<GameState['status'], 'playing'>,
-  { title: string; message: string }
+  { title: string; message: string; image?: string }
 > = {
-  title: { title: 'TETRIS', message: 'Enter でスタート' },
+  title: { title: 'TETRIS', message: 'Enter でスタート', image: logo },
   paused: { title: 'PAUSE', message: 'P / Esc で再開' },
   gameover: { title: 'GAME OVER', message: 'Enter でもう一度' },
 }

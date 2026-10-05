@@ -18,3 +18,8 @@
 .message {
   margin: 4px 0;
 }
+
+.image {
+  justify-self: center;
+  margin-bottom: 12px;
+}
