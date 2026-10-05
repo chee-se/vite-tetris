@@ -1,0 +1,15 @@
+.stats {
+  margin: 0;
+}
+
+.stats dt {
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+}
+
+.stats dd {
+  margin: 0 0 12px;
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}

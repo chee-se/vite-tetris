@@ -1,5 +1,7 @@
+import Cell from '@/components/Cell.tsx'
 import { getShape } from '@/game/piece.ts'
 import type { Field, Piece } from '@/game/types.ts'
+import styles from './Board.module.css'
 
 type Props = {
   field: Field
@@ -26,11 +28,9 @@ function overlay(field: Field, piece: Piece): Field {
 
 function Board({ field, current }: Props) {
   return (
-    <div className="board">
+    <div className={styles.board}>
       {(current ? overlay(field, current) : field).map((row, y) =>
-        row.map((cell, x) => (
-          <div className="cell" data-cell={cell} key={`${y}-${x}`} />
-        )),
+        row.map((cell, x) => <Cell cell={cell} key={`${y}-${x}`} />),
       )}
     </div>
   )

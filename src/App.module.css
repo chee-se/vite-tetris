@@ -1,0 +1,21 @@
+.app h1 {
+  margin: 0 0 16px;
+  font-size: 24px;
+  letter-spacing: 0.1em;
+}
+
+/* フィールドと右側の情報を横に並べる */
+.game {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+/* Overlay をフィールドに重ねるための土台 */
+.boardWrap {
+  position: relative;
+}
+
+.side {
+  min-width: 120px;
+}

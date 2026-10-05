@@ -1,0 +1,20 @@
+/* 開発用のデバッグ表示 */
+.debug {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 12px;
+  margin: 12px 0 0;
+  padding: 8px 12px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  background: var(--cell-empty);
+  border: 1px dashed var(--border);
+}
+
+.debug dt {
+  color: var(--muted);
+}
+
+.debug dd {
+  margin: 0;
+}
