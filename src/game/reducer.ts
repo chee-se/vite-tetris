@@ -1,10 +1,4 @@
-import {
-  createSampleField,
-  createEmptyField,
-  lockPiece,
-  spawnPiece,
-  clearLines,
-} from './field.ts'
+import { createEmptyField, lockPiece, spawnPiece, clearLines } from './field.ts'
 import type { Field, Piece, PieceType } from './types.ts'
 import { collides, ROTATION_LEFT, ROTATION_RIGHT } from './piece.ts'
 import { lineClearScore, levelFor } from './score.ts'
@@ -14,14 +8,14 @@ type Common = {
   score: number
   lines: number
   level: number
+  next: PieceType
 }
-type Status = { status: 'playing'; current: Piece } | { status: 'gameover' }
+type Status =
+  | { status: 'playing'; current: Piece }
+  | { status: 'paused'; current: Piece }
+  | { status: 'gameover' }
+  | { status: 'title' }
 export type GameState = Common & Status
-
-export const initialState: GameState = {
-  ...createInitialState('T'),
-  field: createSampleField(),
-}
 
 // キー入力から送る action。引数を持たない
 export const ACTION_TYPES = [
@@ -38,26 +32,48 @@ export type Action =
   | { [K in ActionType]: { type: K } }[ActionType]
   | { type: 'tick'; nextType: PieceType }
   | { type: 'hardDrop'; nextType: PieceType }
-  // Enter キーで送る。ゲームオーバーから新しいゲームを始める
-  | { type: 'restart'; nextType: PieceType }
+  // Enter キーで送る。タイトルかゲームオーバーから新しいゲームを始める
+  | { type: 'start'; nextType: PieceType }
+  // P / Esc キーで送る。プレイ中と一時停止を切り替える
+  | { type: 'pause' }
+
+export function createTitleState(next: PieceType): GameState {
+  return {
+    field: createEmptyField(),
+    status: 'title',
+    score: 0,
+    lines: 0,
+    level: 1,
+    next,
+  }
+}
 
 export function reducer(state: GameState, action: Action): GameState {
-  if (action.type === 'restart') {
-    if (state.status !== 'gameover') return state
-    return createInitialState(action.nextType)
+  if (['title', 'gameover'].includes(state.status)) {
+    if (action.type === 'start')
+      return createInitialState(state.next, action.nextType)
+    return state
   }
+  if (state.status === 'paused') {
+    if (action.type === 'pause') return { ...state, status: 'playing' }
+    return state
+  }
+  if (action.type === 'start') return state
+
   // ここから下では state.status が 'playing' に絞り込まれ、state.current が使える
   if (state.status !== 'playing') return state
-  if (action.type === 'hardDrop') return hardDrop(state, action)
+  if (action.type === 'pause') return { ...state, status: 'paused' }
 
-  const { field, current, score, lines, level } = state
+  if (action.type === 'hardDrop') return hardDrop(state, action)
+  const { field, current, score, lines, level, next } = state
   const moved = movePiece(current, action)
-  if (!collides(field, moved))
+  if (!collides(field, moved)) {
     return {
       ...state,
       current: moved,
       score: score + (action.type === 'down' ? 1 : 0),
     }
+  }
   // 落下以外の衝突は無操作と同じ
   if (action.type !== 'tick') return state
   // 着地
@@ -65,7 +81,7 @@ export function reducer(state: GameState, action: Action): GameState {
     field: remaining,
     cleared,
     status: gameStatus,
-  } = lockAndSpawn(field, current, action.nextType)
+  } = lockAndSpawn(field, current, next)
 
   return {
     ...gameStatus,
@@ -73,12 +89,16 @@ export function reducer(state: GameState, action: Action): GameState {
     score: score + lineClearScore(cleared, level),
     lines: lines + cleared,
     level: levelFor(lines + cleared),
+    next: action.nextType,
   }
 }
 
 function movePiece(
   current: Piece,
-  action: Exclude<Action, { type: 'hardDrop' } | { type: 'restart' }>,
+  action: Exclude<
+    Action,
+    { type: 'hardDrop' } | { type: 'start' } | { type: 'pause' }
+  >,
 ): Piece {
   const moved = { ...current }
   switch (action.type) {
@@ -110,14 +130,14 @@ function hardDrop(
   state: Extract<GameState, { status: 'playing' }>,
   action: Extract<Action, { nextType: PieceType }>,
 ): GameState {
-  const { field, current, score, lines, level } = state
+  const { field, current, score, lines, level, next } = state
   const landed = dropToLand(field, current)
   const dropScore = 2 * (landed.y - current.y)
   const {
     field: remaining,
     cleared,
     status: gameStatus,
-  } = lockAndSpawn(field, landed, action.nextType)
+  } = lockAndSpawn(field, landed, next)
 
   return {
     ...gameStatus,
@@ -125,6 +145,7 @@ function hardDrop(
     score: score + dropScore + lineClearScore(cleared, level),
     lines: lines + cleared,
     level: levelFor(lines + cleared),
+    next: action.nextType,
   }
 }
 
@@ -154,13 +175,14 @@ function dropToLand(field: Field, piece: Piece): Piece {
   return result
 }
 
-function createInitialState(type: PieceType): GameState {
+function createInitialState(current: PieceType, next: PieceType): GameState {
   return {
     field: createEmptyField(),
     status: 'playing',
-    current: spawnPiece(type),
+    current: spawnPiece(current),
     score: 0,
     lines: 0,
     level: 1,
+    next,
   }
 }

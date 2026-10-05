@@ -1,0 +1,31 @@
+.next {
+  /* ここだけマスを小さくする。CSS 変数は親から子へ受け継がれるので、
+     中の Cell も 20px になる */
+  --cell-size: 20px;
+
+  margin-bottom: 24px;
+}
+
+.label {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: normal;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+}
+
+/* ミノを置く枠。どのミノでも大きさが変わらないよう、4 × 4 マス分の大きさに固定する */
+.frame {
+  display: grid;
+  place-content: center;
+  width: calc(var(--cell-size) * 4 + 24px);
+  height: calc(var(--cell-size) * 4 + 24px);
+  background: var(--cell-empty);
+  border: 2px solid var(--border);
+}
+
+/* ミノの形を並べるグリッド。列の数はミノによって違うので、style で渡す */
+.grid {
+  display: grid;
+  gap: 1px;
+}

@@ -1,0 +1,25 @@
+/* 親（App の .boardWrap）が position: relative なので、フィールドの上にぴったり重なる */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  background: rgb(0 0 0 / 0.65);
+}
+
+.title {
+  margin: 4px 0;
+  font-size: 28px;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+}
+
+.message {
+  margin: 4px 0;
+}
+
+.image {
+  justify-self: center;
+  margin-bottom: 12px;
+}

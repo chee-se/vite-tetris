@@ -1,4 +1,5 @@
 import type { GameState } from '@/game/reducer.ts'
+import styles from './DebugPanel.module.css'
 
 type Props = {
   state: GameState
@@ -9,7 +10,7 @@ function DebugPanel({ state }: Props) {
   const filled = state.field.flat().filter((cell) => cell !== 0).length
 
   return (
-    <dl className="debug">
+    <dl className={styles.debug}>
       <dt>mode</dt>
       <dd>{import.meta.env.MODE}</dd>
       <dt>status</dt>

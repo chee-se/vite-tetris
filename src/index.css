@@ -1,6 +1,12 @@
+/* ページ全体に効かせるスタイルだけを置く。部品ごとの見た目は *.module.css に書く */
 :root {
   --bg: #1a1a2e;
   --text: #e5e5f0;
+  --muted: #9a9ab8;
+  --border: #55557a;
+  --cell-empty: #11111f;
+  /* マス 1 つの大きさ。Board と NextPiece の両方がこの変数を使う */
+  --cell-size: 28px;
 
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
   color: var(--text);
@@ -16,119 +22,4 @@ body {
   min-height: 100vh;
   display: grid;
   place-items: center;
-}
-
-.board {
-  --cell-size: 28px;
-
-  display: grid;
-  grid-template-columns: repeat(10, var(--cell-size));
-  grid-template-rows: repeat(20, var(--cell-size));
-  gap: 1px;
-  padding: 1px;
-  background: #2a2a44;
-  border: 2px solid #55557a;
-}
-
-.cell {
-  background: #11111f;
-}
-
-/* data-cell の値（ミノの種類）で色を変える */
-/* I: シアン */
-.cell[data-cell='1'] {
-  background: #00bcd4;
-}
-/* O: 黄 */
-.cell[data-cell='2'] {
-  background: #ffd600;
-}
-/* T: 紫 */
-.cell[data-cell='3'] {
-  background: #9c27b0;
-}
-/* S: 緑 */
-.cell[data-cell='4'] {
-  background: #4caf50;
-}
-/* Z: 赤 */
-.cell[data-cell='5'] {
-  background: #f44336;
-}
-/* J: 青 */
-.cell[data-cell='6'] {
-  background: #2962ff;
-}
-/* L: オレンジ */
-.cell[data-cell='7'] {
-  background: #ff9800;
-}
-
-/* フィールドとスコアを横に並べる */
-.game {
-  display: flex;
-  gap: 24px;
-  align-items: flex-start;
-}
-
-/* ゲームオーバーの表示をフィールドに重ねるための土台 */
-.board-wrap {
-  position: relative;
-}
-
-.overlay {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-content: center;
-  text-align: center;
-  background: rgb(0 0 0 / 0.65);
-}
-
-.overlay p {
-  margin: 4px 0;
-}
-
-.overlay-title {
-  font-size: 28px;
-  font-weight: bold;
-  letter-spacing: 0.1em;
-}
-
-.stats {
-  margin: 0;
-  min-width: 120px;
-}
-
-.stats dt {
-  font-size: 12px;
-  color: #9a9ab8;
-  letter-spacing: 0.1em;
-}
-
-.stats dd {
-  margin: 0 0 12px;
-  font-size: 24px;
-  font-variant-numeric: tabular-nums;
-}
-
-/* 開発用のデバッグ表示 */
-.debug {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 2px 12px;
-  margin: 12px 0 0;
-  padding: 8px 12px;
-  font-family: ui-monospace, monospace;
-  font-size: 12px;
-  background: #11111f;
-  border: 1px dashed #55557a;
-}
-
-.debug dt {
-  color: #9a9ab8;
-}
-
-.debug dd {
-  margin: 0;
 }

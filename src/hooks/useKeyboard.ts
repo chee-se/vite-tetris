@@ -3,7 +3,7 @@ import { ACTION_TYPES, type ActionType, type Action } from '@/game/reducer.ts'
 import { randomPieceType } from '@/game/tetrominoes.ts'
 
 // nextType を持つ action。押したときに次のミノを乱数で選んで送る
-const SPAWN_ACTION_TYPES = ['hardDrop', 'restart'] as const
+const SPAWN_ACTION_TYPES = ['hardDrop', 'start'] as const
 type SpawnActionType = (typeof SPAWN_ACTION_TYPES)[number]
 
 // キー入力を reducer の action に変換する。ゲームのルールはここに書かない
@@ -19,8 +19,9 @@ export function useKeyboard(dispatch: Dispatch<Action>): void {
     // e.key は Space のとき ' '（空白 1 文字）になる
     const SPAWN_KEY_BINDINGS: Record<SpawnActionType, string[]> = {
       hardDrop: [' '],
-      restart: ['enter'],
+      start: ['enter'],
     }
+    const PAUSE_KEYS = ['p', 'escape']
     const handler = (e: KeyboardEvent) => {
       const key = e.key.toLocaleLowerCase()
       const type = ACTION_TYPES.find((t) => KEY_BINDINGS[t].includes(key))
@@ -37,6 +38,13 @@ export function useKeyboard(dispatch: Dispatch<Action>): void {
         // 押しっぱなしのキーリピートで、ハードドロップが連続しないようにする
         if (e.repeat) return
         dispatch({ type: spawnType, nextType: randomPieceType() })
+        return
+      }
+      if (PAUSE_KEYS.includes(key)) {
+        e.preventDefault()
+        // 押しっぱなしで一時停止と再開が繰り返されないようにする
+        if (e.repeat) return
+        dispatch({ type: 'pause' })
       }
     }
 
