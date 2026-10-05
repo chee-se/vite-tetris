@@ -214,6 +214,34 @@ describe('reducer: ドロップの得点', () => {
   })
 })
 
+describe('reducer: リスタート', () => {
+  test('ゲームオーバーから restart すると、空のフィールドで最初から始まる', () => {
+    const field = createEmptyField()
+    field[19]![0] = 1
+    const state: GameState = {
+      status: 'gameover',
+      field,
+      score: 1200,
+      lines: 12,
+      level: 2,
+    }
+    const next = play(state, { type: 'restart', nextType: 'L' })
+    expect(next).toEqual({
+      status: 'playing',
+      field: createEmptyField(),
+      current: spawnPiece('L'),
+      score: 0,
+      lines: 0,
+      level: 1,
+    })
+  })
+
+  test('プレイ中の restart は何もしない', () => {
+    const state = stateWith({ type: 'T', rotation: 0, x: 3, y: 5 })
+    expect(reducer(state, { type: 'restart', nextType: 'L' })).toBe(state)
+  })
+})
+
 test('元の state を書き換えない', () => {
   const state = stateWith({ type: 'T', rotation: 0, x: 3, y: 0 })
   const before = structuredClone(state)

@@ -64,6 +64,54 @@ body {
   background: #ff9800;
 }
 
+/* フィールドとスコアを横に並べる */
+.game {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+/* ゲームオーバーの表示をフィールドに重ねるための土台 */
+.board-wrap {
+  position: relative;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  background: rgb(0 0 0 / 0.65);
+}
+
+.overlay p {
+  margin: 4px 0;
+}
+
+.overlay-title {
+  font-size: 28px;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+}
+
+.stats {
+  margin: 0;
+  min-width: 120px;
+}
+
+.stats dt {
+  font-size: 12px;
+  color: #9a9ab8;
+  letter-spacing: 0.1em;
+}
+
+.stats dd {
+  margin: 0 0 12px;
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
 /* 開発用のデバッグ表示 */
 .debug {
   display: grid;

@@ -7,8 +7,11 @@ import { randomPieceType } from '@/game/tetrominoes.ts'
 export function useGameLoop(
   dispatch: Dispatch<Action>,
   intervalMs: number,
+  enabled: boolean,
 ): void {
   useEffect(() => {
+    if (!enabled) return
+
     const loop = (now: number) => {
       if (lastTick + intervalMs <= now) {
         dispatch({ type: 'tick', nextType: randomPieceType() })
@@ -19,5 +22,5 @@ export function useGameLoop(
     let lastTick = performance.now()
     let frameId = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(frameId)
-  }, [dispatch, intervalMs])
+  }, [dispatch, intervalMs, enabled])
 }

@@ -1,5 +1,6 @@
 import {
   createSampleField,
+  createEmptyField,
   lockPiece,
   spawnPiece,
   clearLines,
@@ -18,12 +19,8 @@ type Status = { status: 'playing'; current: Piece } | { status: 'gameover' }
 export type GameState = Common & Status
 
 export const initialState: GameState = {
+  ...createInitialState('T'),
   field: createSampleField(),
-  status: 'playing',
-  current: { type: 'T', rotation: 0, x: 3, y: 0 },
-  score: 0,
-  lines: 0,
-  level: 1,
 }
 
 // キー入力から送る action。引数を持たない
@@ -41,8 +38,14 @@ export type Action =
   | { [K in ActionType]: { type: K } }[ActionType]
   | { type: 'tick'; nextType: PieceType }
   | { type: 'hardDrop'; nextType: PieceType }
+  // Enter キーで送る。ゲームオーバーから新しいゲームを始める
+  | { type: 'restart'; nextType: PieceType }
 
 export function reducer(state: GameState, action: Action): GameState {
+  if (action.type === 'restart') {
+    if (state.status !== 'gameover') return state
+    return createInitialState(action.nextType)
+  }
   // ここから下では state.status が 'playing' に絞り込まれ、state.current が使える
   if (state.status !== 'playing') return state
   if (action.type === 'hardDrop') return hardDrop(state, action)
@@ -75,7 +78,7 @@ export function reducer(state: GameState, action: Action): GameState {
 
 function movePiece(
   current: Piece,
-  action: Exclude<Action, { type: 'hardDrop' }>,
+  action: Exclude<Action, { type: 'hardDrop' } | { type: 'restart' }>,
 ): Piece {
   const moved = { ...current }
   switch (action.type) {
@@ -149,4 +152,15 @@ function dropToLand(field: Field, piece: Piece): Piece {
     result.y += 1
   }
   return result
+}
+
+function createInitialState(type: PieceType): GameState {
+  return {
+    field: createEmptyField(),
+    status: 'playing',
+    current: spawnPiece(type),
+    score: 0,
+    lines: 0,
+    level: 1,
+  }
 }
