@@ -1,6 +1,6 @@
 import { useEffect, type Dispatch } from 'react'
 import type { Action } from '@/game/reducer.ts'
-import { randomPieceType } from '@/game/tetrominoes.ts'
+import { randomPieceBag } from '@/game/tetrominoes.ts'
 
 // requestAnimationFrame で毎フレーム呼ばれ、前回の tick から intervalMs 以上たったら
 // tick を 1 回送る。ゲームのルール（落ちる・固定する）はここに書かない
@@ -14,7 +14,7 @@ export function useGameLoop(
 
     const loop = (now: number) => {
       if (lastTick + intervalMs <= now) {
-        dispatch({ type: 'tick', nextType: randomPieceType() })
+        dispatch({ type: 'tick', nextBag: randomPieceBag() })
         lastTick = now
       }
       frameId = requestAnimationFrame(loop)

@@ -26,6 +26,10 @@ function DebugPanel({ state }: Props) {
       )}
       <dt>固定ブロック</dt>
       <dd>{filled} マス</dd>
+      <dt>next</dt>
+      <dd>{state.next}</dd>
+      <dt>7-bag</dt>
+      <dd>{state.bag.join(', ')}</dd>
     </dl>
   )
 }

@@ -9,6 +9,7 @@ type Common = {
   lines: number
   level: number
   next: PieceType
+  bag: PieceType[]
 }
 type Status =
   | { status: 'playing'; current: Piece }
@@ -26,37 +27,43 @@ export const ACTION_TYPES = [
   'rotateLeft',
 ] as const
 export type ActionType = (typeof ACTION_TYPES)[number]
-// tick はゲームループから送る。乱数は reducer の外で選び、nextType として渡す（reducer を純粋に保つため）。
-// hardDrop もその場で固定して次のミノを出すので、nextType を持つ
+// tick はゲームループから送る。乱数は reducer の外で選び、nextBag として渡す（reducer を純粋に保つため）。
+// hardDrop もその場で固定して次のミノを出すので、nextBag を持つ
 export type Action =
   | { [K in ActionType]: { type: K } }[ActionType]
-  | { type: 'tick'; nextType: PieceType }
-  | { type: 'hardDrop'; nextType: PieceType }
+  | { type: 'tick'; nextBag: PieceType[] }
+  | { type: 'hardDrop'; nextBag: PieceType[] }
   // Enter キーで送る。タイトルかゲームオーバーから新しいゲームを始める
-  | { type: 'start'; nextType: PieceType }
+  | { type: 'start'; nextBag: PieceType[] }
   // P / Esc キーで送る。プレイ中と一時停止を切り替える
   | { type: 'pause' }
 
-export function createTitleState(next: PieceType): GameState {
+export function createTitleState(nextBag: PieceType[]): GameState {
+  const bag = [...nextBag]
   return {
     field: createEmptyField(),
     status: 'title',
     score: 0,
     lines: 0,
     level: 1,
-    next,
+    next: bag.shift()!,
+    bag,
   }
 }
 
 export function reducer(state: GameState, action: Action): GameState {
-  if (['title', 'gameover'].includes(state.status)) {
-    if (action.type === 'start')
-      return createInitialState(state.next, action.nextType)
-    return state
+  if (state.status === 'title') {
+    if (action.type !== 'start') return state
+    return createInitialState(state.next, state.bag)
+  }
+  if (state.status === 'gameover') {
+    if (action.type !== 'start') return state
+    const nextBag = [...action.nextBag]
+    return createInitialState(nextBag.shift()!, nextBag)
   }
   if (state.status === 'paused') {
-    if (action.type === 'pause') return { ...state, status: 'playing' }
-    return state
+    if (action.type !== 'pause') return state
+    return { ...state, status: 'playing' }
   }
   if (action.type === 'start') return state
 
@@ -65,7 +72,7 @@ export function reducer(state: GameState, action: Action): GameState {
   if (action.type === 'pause') return { ...state, status: 'paused' }
 
   if (action.type === 'hardDrop') return hardDrop(state, action)
-  const { field, current, score, lines, level, next } = state
+  const { field, current, score, lines, level, next, bag } = state
   const moved = movePiece(current, action)
   if (!collides(field, moved)) {
     return {
@@ -82,6 +89,10 @@ export function reducer(state: GameState, action: Action): GameState {
     cleared,
     status: gameStatus,
   } = lockAndSpawn(field, current, next)
+  const { next: takenNext, bag: takenBag } = takePieceAndBag(
+    bag,
+    action.nextBag,
+  )
 
   return {
     ...gameStatus,
@@ -89,7 +100,8 @@ export function reducer(state: GameState, action: Action): GameState {
     score: score + lineClearScore(cleared, level),
     lines: lines + cleared,
     level: levelFor(lines + cleared),
-    next: action.nextType,
+    next: takenNext,
+    bag: takenBag,
   }
 }
 
@@ -128,9 +140,9 @@ function movePiece(
 
 function hardDrop(
   state: Extract<GameState, { status: 'playing' }>,
-  action: Extract<Action, { nextType: PieceType }>,
+  action: Extract<Action, { nextBag: PieceType[] }>,
 ): GameState {
-  const { field, current, score, lines, level, next } = state
+  const { field, current, score, lines, level, next, bag } = state
   const landed = dropToLand(field, current)
   const dropScore = 2 * (landed.y - current.y)
   const {
@@ -138,6 +150,10 @@ function hardDrop(
     cleared,
     status: gameStatus,
   } = lockAndSpawn(field, landed, next)
+  const { next: takenNext, bag: takenBag } = takePieceAndBag(
+    bag,
+    action.nextBag,
+  )
 
   return {
     ...gameStatus,
@@ -145,7 +161,8 @@ function hardDrop(
     score: score + dropScore + lineClearScore(cleared, level),
     lines: lines + cleared,
     level: levelFor(lines + cleared),
-    next: action.nextType,
+    next: takenNext,
+    bag: takenBag,
   }
 }
 
@@ -167,7 +184,11 @@ function lockAndSpawn(
   }
 }
 
-function createInitialState(current: PieceType, next: PieceType): GameState {
+function createInitialState(
+  current: PieceType,
+  nextBag: PieceType[],
+): GameState {
+  const bag = [...nextBag]
   return {
     field: createEmptyField(),
     status: 'playing',
@@ -175,6 +196,18 @@ function createInitialState(current: PieceType, next: PieceType): GameState {
     score: 0,
     lines: 0,
     level: 1,
-    next,
+    next: bag.shift()!,
+    bag,
+  }
+}
+
+function takePieceAndBag(
+  bag: PieceType[],
+  nextBag: PieceType[],
+): { next: PieceType; bag: PieceType[] } {
+  const bagClone = [...bag]
+  return {
+    next: bagClone.shift()!,
+    bag: bagClone.length > 0 ? bagClone : nextBag,
   }
 }

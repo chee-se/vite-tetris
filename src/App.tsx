@@ -6,7 +6,7 @@ import Overlay from '@/components/Overlay.tsx'
 import Stats from '@/components/Stats.tsx'
 import { createTitleState, reducer, type GameState } from '@/game/reducer.ts'
 import { dropIntervalMs } from '@/game/score.ts'
-import { randomPieceType } from '@/game/tetrominoes.ts'
+import { randomPieceBag } from '@/game/tetrominoes.ts'
 import { useGameLoop } from '@/hooks/useGameLoop.ts'
 import { useKeyboard } from '@/hooks/useKeyboard.ts'
 import styles from './App.module.css'
@@ -28,9 +28,9 @@ const OVERLAYS: Record<
 
 function App() {
   // 第 3 引数の初期化関数は最初の 1 回だけ呼ばれる。
-  // 乱数で next を選ぶので、定数の initialState ではなく関数で作る
+  // 乱数で最初のバッグを作るので、定数の initialState ではなく関数で作る
   const [state, dispatch] = useReducer(reducer, undefined, () =>
-    createTitleState(randomPieceType()),
+    createTitleState(randomPieceBag()),
   )
   useKeyboard(dispatch)
   useGameLoop(dispatch, dropIntervalMs(state.level), state.status === 'playing')
