@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Vite の学習を目的として、テトリスをステップごとに作るプロジェクト。完成を急ぐより、各ステップで Vite / React / TypeScript の仕組みを理解することを重視する。
 
 - 仕様: `docs/spec.md`（技術方針・ゲームのルール・操作・状態遷移）
-- 実装計画: `docs/plan.md`（Step 0〜8、各ステップの完了条件と進み具合）
+- 実装計画: `docs/plan.md`（Step 0〜9、各ステップの完了条件と進み具合）
 
 作業は `docs/plan.md` のステップ順に進める。ステップが終わったら、表の「状態」列を更新する。仕様を変えたときは `docs/spec.md` も合わせて直す。
 
@@ -35,7 +35,7 @@ Vite は型を外すだけで型チェックはしない。型エラーを確認
 
 ## アーキテクチャの方針
 
-Vite 8 + React 19 + TypeScript で作り、描画は DOM（CSS Grid）で行う。回転はシンプル回転（壁蹴りなし）。詳しくは `docs/spec.md` を参照。
+Vite 8 + React 19 + TypeScript で作り、描画は DOM（CSS Grid）で行う。回転は SRS（壁蹴りつき。Step 6 まではシンプル回転だった）。詳しくは `docs/spec.md` を参照。
 
 コードを置く場所は次の3つに分ける。この分け方を守る。
 

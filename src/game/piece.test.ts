@@ -1,7 +1,12 @@
 import { describe, expect, test } from 'vitest'
 // vite.config.ts の設定（@/ のエイリアス）が、Vitest でもそのまま効く
 import { createEmptyField } from '@/game/field.ts'
-import { collides, getShape, rotateClockwise } from '@/game/piece.ts'
+import {
+  collides,
+  getShape,
+  dropToLand,
+  rotateClockwise,
+} from '@/game/piece.ts'
 import { SHAPES } from '@/game/tetrominoes.ts'
 import type { Piece } from '@/game/types.ts'
 
@@ -93,6 +98,38 @@ describe('rotateClockwise', () => {
     const before = structuredClone(SHAPES.S)
     rotateClockwise(SHAPES.S)
     expect(SHAPES.S).toEqual(before)
+  })
+})
+
+describe('dropToLand', () => {
+  test('空のフィールドなら床の上まで落ちる', () => {
+    // T のブロックは箱の 2 行目（dy = 1）まで。y = 18 なら床の行 19 に接する
+    expect(dropToLand(createEmptyField(), t(3, 0))).toEqual(t(3, 18))
+  })
+
+  test('固定ブロックがあれば、その上で止まる', () => {
+    const field = createEmptyField()
+    field[10]![4] = 1 // T の中心の列（x = 4）の y = 10 にブロック
+    expect(dropToLand(field, t(3, 0))).toEqual(t(3, 8))
+  })
+
+  test('すでに着地しているなら、同じ位置を返す', () => {
+    expect(dropToLand(createEmptyField(), t(3, 18))).toEqual(t(3, 18))
+  })
+
+  test('回転した形で判定する', () => {
+    // 縦向きの I は箱の 4 行すべてにブロックがある
+    const verticalI: Piece = { type: 'I', rotation: 1, x: 3, y: 0 }
+    expect(dropToLand(createEmptyField(), verticalI)).toEqual({
+      ...verticalI,
+      y: 16,
+    })
+  })
+
+  test('元の piece を書き換えない', () => {
+    const piece = t(3, 0)
+    dropToLand(createEmptyField(), piece)
+    expect(piece).toEqual(t(3, 0))
   })
 })
 

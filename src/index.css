@@ -5,7 +5,7 @@
   --muted: #9a9ab8;
   --border: #55557a;
   --cell-empty: #11111f;
-  /* マス 1 つの大きさ。Board と NextPiece の両方がこの変数を使う */
+  /* マス 1 つの大きさ。Board と PiecePreview の両方がこの変数を使う */
   --cell-size: 28px;
 
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;

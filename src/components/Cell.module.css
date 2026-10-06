@@ -39,3 +39,9 @@
 .cell[data-cell='0'][data-blank] {
   background: transparent;
 }
+
+/* ゴーストを薄く表示するマス */
+.cell[data-ghost] {
+  opacity: 0.3;
+  box-shadow: inset 0px 0px 0px 1px #fff;
+}

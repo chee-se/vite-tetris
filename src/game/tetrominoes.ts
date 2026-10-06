@@ -40,8 +40,17 @@ export const SHAPES: Record<PieceType, Field> = {
   ],
 }
 
-// 7 種類から 1 つを等確率で選ぶ（7-bag は Step 7 の発展要素）。
+// ランダムな順番で7種類ずつ排出する7-bagを作る
 // 乱数を使うので純粋ではない。reducer の中ではなく、action を作る側（hooks）で呼ぶ
-export function randomPieceType(): PieceType {
-  return PIECE_TYPES[Math.floor(Math.random() * PIECE_TYPES.length)] ?? 'I'
+export function randomPieceBag(): PieceType[] {
+  return shuffleArray(PIECE_TYPES)
+}
+
+function shuffleArray<T>(array: readonly T[]): T[] {
+  const clone = [...array]
+  for (let i = clone.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[clone[i]!, clone[j]!] = [clone[j]!, clone[i]!] // 要素を入れ替える
+  }
+  return clone
 }

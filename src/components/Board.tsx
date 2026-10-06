@@ -1,5 +1,5 @@
 import Cell from '@/components/Cell.tsx'
-import { getShape } from '@/game/piece.ts'
+import { getShape, dropToLand } from '@/game/piece.ts'
 import type { Field, Piece } from '@/game/types.ts'
 import styles from './Board.module.css'
 
@@ -27,10 +27,22 @@ function overlay(field: Field, piece: Piece): Field {
 }
 
 function Board({ field, current }: Props) {
+  const ghost = current ? overlay(field, dropToLand(field, current)) : field
+  const cells = current ? overlay(field, current) : field
   return (
     <div className={styles.board}>
-      {(current ? overlay(field, current) : field).map((row, y) =>
-        row.map((cell, x) => <Cell cell={cell} key={`${y}-${x}`} />),
+      {cells.map((row, y) =>
+        row.map((cell, x) => {
+          const ghostCell = ghost[y]?.[x] ?? 0
+          // cell が 0 なら固定ブロックも落下中のミノもないので、ゴーストのマスならゴーストを表示する
+          return (
+            <Cell
+              cell={cell !== 0 ? cell : ghostCell}
+              ghost={cell === 0 && ghostCell !== 0}
+              key={`${y}-${x}`}
+            />
+          )
+        }),
       )}
     </div>
   )
