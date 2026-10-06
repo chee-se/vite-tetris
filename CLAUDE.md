@@ -35,7 +35,7 @@ Vite は型を外すだけで型チェックはしない。型エラーを確認
 
 ## アーキテクチャの方針
 
-Vite 8 + React 19 + TypeScript で作り、描画は DOM（CSS Grid）で行う。回転はシンプル回転（壁蹴りなし）。詳しくは `docs/spec.md` を参照。
+Vite 8 + React 19 + TypeScript で作り、描画は DOM（CSS Grid）で行う。回転は SRS（壁蹴りつき。Step 6 まではシンプル回転だった）。詳しくは `docs/spec.md` を参照。
 
 コードを置く場所は次の3つに分ける。この分け方を守る。
 
