@@ -1,12 +1,13 @@
 import { useReducer } from 'react'
 import Board from '@/components/Board.tsx'
 import DebugPanel from '@/components/DebugPanel.tsx'
-import NextPiece from '@/components/NextPiece.tsx'
+import PiecePreview from '@/components/PiecePreview.tsx'
 import Overlay from '@/components/Overlay.tsx'
 import Stats from '@/components/Stats.tsx'
 import { createTitleState, reducer, type GameState } from '@/game/reducer.ts'
 import { dropIntervalMs } from '@/game/score.ts'
 import { randomPieceBag } from '@/game/tetrominoes.ts'
+import type { PieceType } from '@/game/types.ts'
 import { useGameLoop } from '@/hooks/useGameLoop.ts'
 import { useKeyboard } from '@/hooks/useKeyboard.ts'
 import styles from './App.module.css'
@@ -32,28 +33,39 @@ function App() {
   const [state, dispatch] = useReducer(reducer, undefined, () =>
     createTitleState(randomPieceBag()),
   )
+  const playingOrPaused =
+    state.status === 'playing' || state.status === 'paused'
+
   useKeyboard(dispatch)
   useGameLoop(dispatch, dropIntervalMs(state.level), state.status === 'playing')
+
+  const hold: PieceType | undefined = playingOrPaused ? state.hold : undefined
+  const canHold: boolean | undefined = playingOrPaused
+    ? state.canHold
+    : undefined
 
   return (
     <main className={styles.app}>
       <h1>Vite Tetris</h1>
       <div className={styles.game}>
+        <div className={styles.holdSide}>
+          <PiecePreview
+            type={hold}
+            label={'HOLD'}
+            disabled={canHold === false}
+          />
+        </div>
         <div className={styles.boardWrap}>
           <Board
             field={state.field}
-            current={
-              state.status === 'playing' || state.status === 'paused'
-                ? state.current
-                : undefined
-            }
+            current={playingOrPaused ? state.current : undefined}
           />
           {state.status !== 'playing' && (
             <Overlay {...OVERLAYS[state.status]} />
           )}
         </div>
         <div className={styles.side}>
-          <NextPiece type={state.next} />
+          <PiecePreview type={state.next} label={'NEXT'} />
           <Stats score={state.score} lines={state.lines} level={state.level} />
         </div>
       </div>

@@ -29,6 +29,7 @@ const stateWith = (
   score: 0,
   lines: 0,
   level: 1,
+  canHold: true,
 })
 
 // reducer を呼び、結果がまだ playing であることを確かめてから返す。
@@ -317,6 +318,7 @@ describe('reducer: タイトルとスタート', () => {
       score: 0,
       lines: 0,
       level: 1,
+      canHold: true,
     })
   })
 

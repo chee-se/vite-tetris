@@ -12,8 +12,8 @@ type Common = {
   bag: PieceType[]
 }
 type Status =
-  | { status: 'playing'; current: Piece }
-  | { status: 'paused'; current: Piece }
+  | { status: 'playing'; current: Piece; hold?: PieceType; canHold: boolean }
+  | { status: 'paused'; current: Piece; hold?: PieceType; canHold: boolean }
   | { status: 'gameover' }
   | { status: 'title' }
 export type GameState = Common & Status
@@ -37,6 +37,7 @@ export type Action =
   | { type: 'start'; nextBag: PieceType[] }
   // P / Esc キーで送る。プレイ中と一時停止を切り替える
   | { type: 'pause' }
+  | { type: 'hold'; nextBag: PieceType[] }
 
 export function createTitleState(nextBag: PieceType[]): GameState {
   const bag = [...nextBag]
@@ -72,7 +73,9 @@ export function reducer(state: GameState, action: Action): GameState {
   if (action.type === 'pause') return { ...state, status: 'paused' }
 
   if (action.type === 'hardDrop') return hardDrop(state, action)
-  const { field, current, score, lines, level, next, bag } = state
+  if (action.type === 'hold') return holdMino(state, action)
+
+  const { field, current, score, lines, level, next, bag, hold } = state
   const moved = movePiece(current, action)
   if (!collides(field, moved)) {
     return {
@@ -81,18 +84,17 @@ export function reducer(state: GameState, action: Action): GameState {
       score: score + (action.type === 'down' ? 1 : 0),
     }
   }
+
   // 落下以外の衝突は無操作と同じ
   if (action.type !== 'tick') return state
+
   // 着地
   const {
     field: remaining,
     cleared,
     status: gameStatus,
-  } = lockAndSpawn(field, current, next)
-  const { next: takenNext, bag: takenBag } = takePieceAndBag(
-    bag,
-    action.nextBag,
-  )
+  } = lockAndSpawn(field, current, next, hold)
+  const { takenNext, takenBag } = takePieceAndBag(bag, action.nextBag)
 
   return {
     ...gameStatus,
@@ -109,7 +111,10 @@ function movePiece(
   current: Piece,
   action: Exclude<
     Action,
-    { type: 'hardDrop' } | { type: 'start' } | { type: 'pause' }
+    | { type: 'hardDrop' }
+    | { type: 'start' }
+    | { type: 'pause' }
+    | { type: 'hold' }
   >,
 ): Piece {
   const moved = { ...current }
@@ -142,20 +147,17 @@ function hardDrop(
   state: Extract<GameState, { status: 'playing' }>,
   action: Extract<Action, { nextBag: PieceType[] }>,
 ): GameState {
-  const { field, current, score, lines, level, next, bag } = state
+  const { field, current, score, lines, level, next, bag, hold } = state
   const landed = dropToLand(field, current)
   const dropScore = 2 * (landed.y - current.y)
   const {
     field: remaining,
     cleared,
     status: gameStatus,
-  } = lockAndSpawn(field, landed, next)
-  const { next: takenNext, bag: takenBag } = takePieceAndBag(
-    bag,
-    action.nextBag,
-  )
+  } = lockAndSpawn(field, landed, next, hold)
+  const { takenNext, takenBag } = takePieceAndBag(bag, action.nextBag)
 
-  return {
+  const result = {
     ...gameStatus,
     field: remaining,
     score: score + dropScore + lineClearScore(cleared, level),
@@ -164,17 +166,52 @@ function hardDrop(
     next: takenNext,
     bag: takenBag,
   }
+
+  if (result.status === 'playing') return { ...result, hold }
+  return result
+}
+
+function holdMino(
+  state: Extract<GameState, { status: 'playing' }>,
+  action: Extract<Action, { type: 'hold' }>,
+): GameState {
+  const { field, hold, canHold, current, next, bag } = state
+  if (!canHold) return state
+
+  // ホールドが空のとき、次のミノを取り出す
+  if (hold === undefined) {
+    const { takenNext, takenBag } = takePieceAndBag(bag, action.nextBag)
+    return {
+      ...state,
+      hold: current.type,
+      canHold: false,
+      current: spawnPiece(next),
+      next: takenNext,
+      bag: takenBag,
+    }
+  }
+
+  // ホールドで戻せないとき、無視する
+  if (collides(field, spawnPiece(hold))) return state
+
+  return {
+    ...state,
+    hold: current.type,
+    canHold: false,
+    current: spawnPiece(hold),
+  }
 }
 
 function lockAndSpawn(
   field: Field,
   current: Piece,
   nextType: PieceType,
+  hold?: PieceType,
 ): { field: Field; cleared: number; status: Status } {
   const { field: remaining, cleared } = clearLines(lockPiece(field, current))
   const next = spawnPiece(nextType)
   const status: Status = !collides(remaining, next)
-    ? { status: 'playing', current: next }
+    ? { status: 'playing', current: next, canHold: true, hold }
     : { status: 'gameover' }
 
   return {
@@ -198,16 +235,17 @@ function createInitialState(
     level: 1,
     next: bag.shift()!,
     bag,
+    canHold: true,
   }
 }
 
 function takePieceAndBag(
   bag: PieceType[],
   nextBag: PieceType[],
-): { next: PieceType; bag: PieceType[] } {
+): { takenNext: PieceType; takenBag: PieceType[] } {
   const bagClone = [...bag]
   return {
-    next: bagClone.shift()!,
-    bag: bagClone.length > 0 ? bagClone : nextBag,
+    takenNext: bagClone.shift()!,
+    takenBag: bagClone.length > 0 ? bagClone : nextBag,
   }
 }

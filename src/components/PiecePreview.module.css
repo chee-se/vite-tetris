@@ -1,4 +1,4 @@
-.next {
+.preview {
   /* ここだけマスを小さくする。CSS 変数は親から子へ受け継がれるので、
      中の Cell も 20px になる */
   --cell-size: 20px;
@@ -28,4 +28,11 @@
 .grid {
   display: grid;
   gap: 1px;
+}
+
+/* ホールドできないあいだ（1 つのミノにつき 1 回使ったあと）は薄く表示する。
+   data-disabled 属性を付けた要素とその中身に効く */
+[data-disabled] .frame,
+.frame[data-disabled] {
+  opacity: 0.4;
 }

@@ -9,7 +9,7 @@ type Props = {
   ghost?: boolean
 }
 
-// マス 1 つ。Board と NextPiece の両方で使う
+// マス 1 つ。Board と PiecePreview の両方で使う
 function Cell({ cell, blank = false, ghost = false }: Props) {
   return (
     <div

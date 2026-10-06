@@ -3,7 +3,7 @@ import { ACTION_TYPES, type ActionType, type Action } from '@/game/reducer.ts'
 import { randomPieceBag } from '@/game/tetrominoes.ts'
 
 // nextBag を持つ action。押したときに次のミノを乱数で並べたバッグを送る
-const SPAWN_ACTION_TYPES = ['hardDrop', 'start'] as const
+const SPAWN_ACTION_TYPES = ['hardDrop', 'start', 'hold'] as const
 type SpawnActionType = (typeof SPAWN_ACTION_TYPES)[number]
 
 // キー入力を reducer の action に変換する。ゲームのルールはここに書かない
@@ -20,6 +20,7 @@ export function useKeyboard(dispatch: Dispatch<Action>): void {
     const SPAWN_KEY_BINDINGS: Record<SpawnActionType, string[]> = {
       hardDrop: [' '],
       start: ['enter'],
+      hold: ['c'],
     }
     const PAUSE_KEYS = ['p', 'escape']
     const handler = (e: KeyboardEvent) => {

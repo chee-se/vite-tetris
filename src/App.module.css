@@ -19,3 +19,8 @@
 .side {
   min-width: 120px;
 }
+
+/* フィールドの左側の列（ホールド）。右の .side と幅をそろえて、フィールドを中央に保つ */
+.holdSide {
+  min-width: 120px;
+}
