@@ -1,5 +1,6 @@
 import { SHAPES } from './tetrominoes.ts'
-import type { Field, Piece, Cell, Rotation } from './types.ts'
+import type { Field, Piece, PieceType, Cell, Rotation } from './types.ts'
+import { JLSTZ_KICKS, I_KICKS, isRotationChange, type Kick } from './srs.ts'
 
 export const ROTATION_RIGHT: Record<Rotation, Rotation> = {
   0: 1,
@@ -55,4 +56,37 @@ export function dropToLand(field: Field, piece: Piece): Piece {
     result.y += 1
   }
   return result
+}
+
+export function srsRotate(field: Field, piece: Piece, to: Rotation): Piece {
+  const { x, y, rotation: from } = piece
+  const kicks = srsRotationTable(piece.type, from, to)
+
+  // 不明な回転はそのまま返す
+  if (kicks === undefined) return piece
+
+  const kick = kicks.find(
+    ([dx, dy]) =>
+      !collides(field, { ...piece, x: x + dx, y: y + dy, rotation: to }),
+  )
+
+  // 全ての回転が衝突するなら回転しない
+  if (kick === undefined) return piece
+
+  const [dx, dy] = kick
+  return { ...piece, x: x + dx, y: y + dy, rotation: to }
+}
+
+function srsRotationTable(
+  type: PieceType,
+  from: Rotation,
+  to: Rotation,
+): readonly Kick[] | undefined {
+  const key = `${from}>${to}`
+  if (!isRotationChange(key)) return
+
+  // O はキックしない
+  if (type === 'O') return [[0, 0]]
+  if (type === 'I') return I_KICKS[key]
+  return JLSTZ_KICKS[key]
 }

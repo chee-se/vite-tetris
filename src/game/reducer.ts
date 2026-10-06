@@ -1,6 +1,12 @@
 import { createEmptyField, lockPiece, spawnPiece, clearLines } from './field.ts'
 import type { Field, Piece, PieceType } from './types.ts'
-import { collides, dropToLand, ROTATION_LEFT, ROTATION_RIGHT } from './piece.ts'
+import {
+  collides,
+  dropToLand,
+  srsRotate,
+  ROTATION_LEFT,
+  ROTATION_RIGHT,
+} from './piece.ts'
 import { lineClearScore, levelFor } from './score.ts'
 
 type Common = {
@@ -76,6 +82,10 @@ export function reducer(state: GameState, action: Action): GameState {
   if (action.type === 'hold') return holdMino(state, action)
 
   const { field, current, score, lines, level, next, bag, hold } = state
+
+  if (action.type === 'rotateRight' || action.type === 'rotateLeft')
+    return rotatePiece(state, action)
+
   const moved = movePiece(current, action)
   if (!collides(field, moved)) {
     return {
@@ -115,6 +125,8 @@ function movePiece(
     | { type: 'start' }
     | { type: 'pause' }
     | { type: 'hold' }
+    | { type: 'rotateRight' }
+    | { type: 'rotateLeft' }
   >,
 ): Piece {
   const moved = { ...current }
@@ -128,12 +140,6 @@ function movePiece(
     case 'down':
       moved.y += 1
       break
-    case 'rotateRight':
-      moved.rotation = ROTATION_RIGHT[moved.rotation]
-      break
-    case 'rotateLeft':
-      moved.rotation = ROTATION_LEFT[moved.rotation]
-      break
     case 'tick':
       moved.y += 1
       break
@@ -141,6 +147,19 @@ function movePiece(
       action satisfies never
   }
   return moved
+}
+
+function rotatePiece(
+  state: Extract<GameState, { status: 'playing' }>,
+  action: Extract<Action, { type: 'rotateRight' } | { type: 'rotateLeft' }>,
+): GameState {
+  const rotationTable =
+    action.type === 'rotateRight' ? ROTATION_RIGHT : ROTATION_LEFT
+  const { field, current } = state
+  const { rotation } = current
+  const rotated = srsRotate(field, current, rotationTable[rotation])
+  if (rotated.rotation === rotation) return state
+  return { ...state, current: rotated }
 }
 
 function hardDrop(

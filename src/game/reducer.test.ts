@@ -85,11 +85,7 @@ describe('reducer: 回転', () => {
     expect(play(state, { type: 'rotateLeft' }).current.rotation).toBe(3)
   })
 
-  test('回転後にぶつかるなら回転しない（壁蹴りなし）', () => {
-    // 縦向きの I を左の壁に寄せた状態。横向きにすると左にはみ出す
-    const state = stateWith({ type: 'I', rotation: 1, x: -2, y: 5 })
-    expect(play(state, { type: 'rotateRight' }).current).toEqual(state.current)
-  })
+  // 壁蹴り（ぶつかったときの動き）は srs.test.ts で確かめる
 })
 
 describe('reducer: tick', () => {
