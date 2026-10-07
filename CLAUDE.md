@@ -23,7 +23,7 @@ Vite の学習を目的として、テトリスをステップごとに作るプ
 ```sh
 npm run dev      # 開発サーバー（http://localhost:5173、HMR あり）
 npm run build    # tsc -b で型チェック → vite build
-npm run lint     # oxlint（ESLint ではない）
+npm run lint     # oxlint（ESLint ではない）。--type-aware で型情報を使うルール（Promise の await 忘れなど）も動く
 npm run fmt      # oxfmt で整形（fmt:check は確認だけ）。Markdown は対象外
 npm run preview  # ビルド結果をローカルで配信
 npm test         # Vitest（watch モード。1 回だけなら npx vitest run）

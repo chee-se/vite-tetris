@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "oxlint",
+    "lint": "oxlint --type-aware",
     "preview": "vite preview",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
@@ -29,6 +29,7 @@
     "@vitest/browser-playwright": "^5.0.3",
     "oxfmt": "^0.71.0",
     "oxlint": "^1.81.0",
+    "oxlint-tsgolint": "^7.0.2003",
     "playwright": "^1.63.0",
     "storybook": "^10.6.1",
     "typescript": "~6.0.2",
