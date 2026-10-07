@@ -26,3 +26,8 @@ dist-ssr
 
 # Vitest Browser Mode の失敗時スクリーンショット
 .vitest
+
+# Playwright の結果とレポート
+/test-results/
+/playwright-report/
+/playwright/.cache/

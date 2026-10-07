@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { createEmptyField } from '@/game/field.ts'
 import {
   reducer,
@@ -74,6 +74,43 @@ describe('randomPieceBag', () => {
       Array.from({ length: 100 }, () => randomPieceBag().join('')),
     )
     expect(orders.size).toBeGreaterThan(50)
+  })
+})
+
+// テストから順番を決められるように、乱数の関数を外から渡せる。
+// シャッフルの中で乱数を何回・どう使うかには依存しないように確かめる
+describe('randomPieceBag に乱数の関数を渡す', () => {
+  // 決まった値を順に返す乱数の関数を作る（最後まで行ったら最初に戻る）
+  function sequence(values: number[]): () => number {
+    let i = 0
+    return () => values[i++ % values.length]!
+  }
+  const values = [0.1, 0.7, 0.3, 0.9, 0.5, 0.2, 0.8]
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  test('渡した乱数の関数を使い、Math.random は使わない', () => {
+    const mathRandom = vi.spyOn(Math, 'random')
+    const random = vi.fn(sequence(values))
+    randomPieceBag(random)
+    expect(random).toHaveBeenCalled()
+    expect(mathRandom).not.toHaveBeenCalled()
+  })
+
+  test('同じ乱数の列を渡すと、同じ順番になる', () => {
+    expect(randomPieceBag(sequence(values))).toEqual(
+      randomPieceBag(sequence(values)),
+    )
+  })
+
+  test('違う乱数の列を渡すと、違う順番になる', () => {
+    expect(randomPieceBag(() => 0)).not.toEqual(randomPieceBag(() => 0.999))
+  })
+
+  test('乱数の関数を渡しても、7 種類が 1 つずつ入っている', () => {
+    expect(randomPieceBag(sequence(values)).toSorted()).toEqual(sortedTypes)
   })
 })
 
