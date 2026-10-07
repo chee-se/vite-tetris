@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, describe, expect, expectTypeOf, test, vi } from 'vitest'
 import { createEmptyField } from '@/game/field.ts'
 import {
   reducer,
@@ -7,7 +7,7 @@ import {
   type GameState,
 } from '@/game/reducer.ts'
 import { randomSeed } from '@/game/random.ts'
-import { randomPieceBag } from '@/game/tetrominoes.ts'
+import { drawPieceBag } from '@/game/bag.ts'
 import { PIECE_TYPES, type PieceType } from '@/game/types.ts'
 
 // タイトル画面の state を作る。seed は毎回ランダムにして、いろいろな袋で試す
@@ -65,53 +65,54 @@ function chunksOf7(pieces: PieceType[]): PieceType[][] {
   )
 }
 
-describe('randomPieceBag', () => {
-  test('7 種類が 1 つずつ入っている', () => {
-    expect(randomPieceBag().toSorted()).toEqual(sortedTypes)
-  })
-
-  test('呼ぶたびにシャッフルされる', () => {
-    const orders = new Set(
-      Array.from({ length: 100 }, () => randomPieceBag().join('')),
-    )
-    expect(orders.size).toBeGreaterThan(50)
-  })
-})
-
-// テストから順番を決められるように、乱数の関数を外から渡せる。
-// シャッフルの中で乱数を何回・どう使うかには依存しないように確かめる
-describe('randomPieceBag に乱数の関数を渡す', () => {
-  // 決まった値を順に返す乱数の関数を作る（最後まで行ったら最初に戻る）
-  function sequence(values: number[]): () => number {
-    let i = 0
-    return () => values[i++ % values.length]!
-  }
-  const values = [0.1, 0.7, 0.3, 0.9, 0.5, 0.2, 0.8]
-
+describe('drawPieceBag', () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })
 
-  test('渡した乱数の関数を使い、Math.random は使わない', () => {
+  test('7 種類が 1 つずつ入っている', () => {
+    expect(drawPieceBag(42).bag.toSorted()).toEqual(sortedTypes)
+  })
+
+  test('rng が違えば、シャッフルされた違う順番になる', () => {
+    const orders = new Set(
+      Array.from({ length: 100 }, (_, rng) => drawPieceBag(rng).bag.join('')),
+    )
+    expect(orders.size).toBeGreaterThan(50)
+  })
+
+  // 型のテスト。実行時には何もしないので、tsc -b で確かめる
+  test('袋の型は、PieceType がちょうど 7 個のタプル', () => {
+    const { bag } = drawPieceBag(42)
+    expectTypeOf(bag).toEqualTypeOf<
+      [
+        PieceType,
+        PieceType,
+        PieceType,
+        PieceType,
+        PieceType,
+        PieceType,
+        PieceType,
+      ]
+    >()
+  })
+
+  test('Math.random は使わない', () => {
     const mathRandom = vi.spyOn(Math, 'random')
-    const random = vi.fn(sequence(values))
-    randomPieceBag(random)
-    expect(random).toHaveBeenCalled()
+    drawPieceBag(42)
     expect(mathRandom).not.toHaveBeenCalled()
   })
 
-  test('同じ乱数の列を渡すと、同じ順番になる', () => {
-    expect(randomPieceBag(sequence(values))).toEqual(
-      randomPieceBag(sequence(values)),
-    )
-  })
-
-  test('違う乱数の列を渡すと、違う順番になる', () => {
-    expect(randomPieceBag(() => 0)).not.toEqual(randomPieceBag(() => 0.999))
-  })
-
-  test('乱数の関数を渡しても、7 種類が 1 つずつ入っている', () => {
-    expect(randomPieceBag(sequence(values)).toSorted()).toEqual(sortedTypes)
+  // E2E は seed でミノの順番を決めているので、シャッフルの書き方を変えても順番が変わらないことを確かめる
+  test('リファクタリングの前と同じ袋と rng を返す', () => {
+    expect(drawPieceBag(42)).toEqual({
+      bag: ['S', 'O', 'I', 'J', 'L', 'T', 'Z'],
+      rng: 2399460328,
+    })
+    expect(drawPieceBag(0)).toEqual({
+      bag: ['S', 'T', 'Z', 'J', 'L', 'I', 'O'],
+      rng: 2399460286,
+    })
   })
 })
 

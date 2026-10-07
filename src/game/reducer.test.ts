@@ -6,7 +6,7 @@ import {
   type Action,
   type GameState,
 } from '@/game/reducer.ts'
-import { drawPieceBag } from '@/game/tetrominoes.ts'
+import { drawPieceBag } from '@/game/bag.ts'
 import type { Piece, PieceType } from '@/game/types.ts'
 
 type PlayingState = Extract<GameState, { status: 'playing' }>
@@ -117,7 +117,7 @@ describe('reducer: tick', () => {
     expect(next.bag).toEqual(['J'])
   })
 
-  test('袋の最後の 1 個を next にしたら、rng から新しい袋を作り、rng を進める', () => {
+  test('袋の最後の 1 個を next にしても、まだ新しい袋は作らず、rng も進めない', () => {
     const state = stateWith(
       { type: 'T', rotation: 0, x: 3, y: 18 },
       undefined,
@@ -125,9 +125,23 @@ describe('reducer: tick', () => {
       ['Z'],
     )
     const next = play(state, { type: 'tick' })
-    const drawn = drawPieceBag(RNG)
     expect(next.next).toBe('Z')
-    expect(next.bag).toEqual(drawn.bag)
+    expect(next.bag).toEqual([])
+    expect(next.rng).toBe(RNG)
+  })
+
+  test('袋が空のときに固定したら、rng から新しい袋を作り、その先頭が next になる', () => {
+    const state = stateWith(
+      { type: 'T', rotation: 0, x: 3, y: 18 },
+      undefined,
+      'S',
+      [],
+    )
+    const next = play(state, { type: 'tick' })
+    const drawn = drawPieceBag(RNG)
+    expect(next.current).toEqual(spawnPiece('S'))
+    expect(next.next).toBe(drawn.bag[0])
+    expect(next.bag).toEqual(drawn.bag.slice(1))
     expect(next.rng).toBe(drawn.rng)
   })
 

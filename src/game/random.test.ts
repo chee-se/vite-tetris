@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { nextRandom, seededRandom } from '@/game/random.ts'
-import { drawPieceBag, randomPieceBag } from '@/game/tetrominoes.ts'
+import { drawPieceBag } from '@/game/bag.ts'
 import { PIECE_TYPES } from '@/game/types.ts'
 
 // count 個の値を取り出す
@@ -21,14 +21,6 @@ describe('seededRandom', () => {
     for (const value of take(seededRandom(7), 1000)) {
       expect(value).toBeGreaterThanOrEqual(0)
       expect(value).toBeLessThan(1)
-    }
-  })
-
-  test('randomPieceBag に渡すと、同じ seed で同じ順番のバッグが続く', () => {
-    const a = seededRandom(42)
-    const b = seededRandom(42)
-    for (let i = 0; i < 10; i++) {
-      expect(randomPieceBag(a)).toEqual(randomPieceBag(b))
     }
   })
 })

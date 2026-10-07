@@ -8,7 +8,7 @@ import {
   ROTATION_RIGHT,
 } from './piece.ts'
 import { lineClearScore, levelFor } from './score.ts'
-import { drawPieceBag } from './tetrominoes.ts'
+import { drawPieceBag } from './bag.ts'
 
 type Common = {
   field: Field
@@ -66,10 +66,7 @@ function createInitialState(rng: number): GameState {
   const {
     bag: [current, next, ...bag],
     rng: nextRng,
-  } = drawPieceBag(rng) as {
-    bag: [PieceType, PieceType, ...PieceType[]]
-    rng: number
-  }
+  } = drawPieceBag(rng)
   return {
     field: createEmptyField(),
     score: 0,
@@ -272,12 +269,11 @@ function takePiece(
   bag: PieceType[],
   rng: number,
 ): { nextPiece: PieceType; nextBag: PieceType[]; nextRng: number } {
-  const [nextPiece, ...remaining] = bag as [PieceType, ...PieceType[]]
-  const { bag: nextBag, rng: nextRng } =
-    remaining.length === 0 ? drawPieceBag(rng) : { bag: remaining, rng }
-  return {
-    nextPiece,
-    nextBag,
-    nextRng,
-  }
+  const [first, ...remaining] = bag
+  if (first !== undefined)
+    return { nextPiece: first, nextBag: remaining, nextRng: rng }
+
+  const { bag: fullBag, rng: nextRng } = drawPieceBag(rng)
+  const [nextPiece, ...nextBag] = fullBag
+  return { nextPiece, nextBag, nextRng }
 }
