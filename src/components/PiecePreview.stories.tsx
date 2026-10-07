@@ -12,6 +12,7 @@ type Story = StoryObj<typeof meta>
 
 export const NextMinoI: Story = {
   argTypes: { type: { control: 'select', options: PIECE_TYPES } },
+  args: { type: PIECE_TYPES[0] },
 }
 
 export const Hold: Story = {
