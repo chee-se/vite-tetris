@@ -4,15 +4,19 @@
 
 技術方針：Vite + React + TypeScript、DOM 描画、SRS（Step 6 まではシンプル回転）。
 
-## ディレクトリ構成（予定）
+## ディレクトリ構成
 
 ```
 src/
 ├── game/          # React に依存しない純粋なゲームロジック（Vitest でテストする）
 │   ├── types.ts
-│   ├── tetrominoes.ts
+│   ├── tetrominoes.ts  # ミノの形
+│   ├── bag.ts          # 7-bag
+│   ├── random.ts       # seed つきの乱数
 │   ├── field.ts
 │   ├── piece.ts
+│   ├── srs.ts          # 壁蹴りの表
+│   ├── score.ts
 │   └── reducer.ts
 ├── hooks/         # ゲームループ・キー入力などのカスタムフック
 ├── components/    # 表示用の React コンポーネント

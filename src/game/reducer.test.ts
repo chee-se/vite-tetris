@@ -11,7 +11,7 @@ import type { Piece, PieceType } from '@/game/types.ts'
 
 type PlayingState = Extract<GameState, { status: 'playing' }>
 
-// テストで使う乱数の状態。袋が空になったときだけ、ここから次の袋が作られる
+// テストで使う乱数の状態。空の袋から取り出すときだけ、ここから次の袋が作られる
 const RNG = 1
 
 // next の既定値は 'O'。着地したテストでは O が出現する。
