@@ -31,3 +31,6 @@ dist-ssr
 /test-results/
 /playwright-report/
 /playwright/.cache/
+
+# Storybook のビルド結果
+/storybook-static/

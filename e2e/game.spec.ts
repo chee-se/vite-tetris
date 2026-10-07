@@ -145,7 +145,7 @@ test('一時停止している間は、時間がたってもミノが落ちな�
   await expect(await boardCells(page)).toEqual(currentCells)
   // ポーズ解除
   await page.keyboard.press('p')
-  await expect(page.getByText('PAUSE', { exact: true })).not.toBeVisible()
+  await expect(page.getByText('PAUSE', { exact: true })).toBeHidden()
   await page.clock.runFor(2000)
   await expect.poll(() => boardCells(page)).not.toEqual(currentCells)
 })
