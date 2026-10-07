@@ -1,4 +1,4 @@
-import { PIECE_TYPES, type Field, type PieceType } from './types.ts'
+import type { Field, PieceType } from './types.ts'
 
 // 出現時（rotation = 0）の形。回転しても箱の大きさが変わらないよう正方形で持つ
 // Record<PieceType, Field> は { [K in PieceType]: Field } と同じ。どれかが抜けると型エラーになる
@@ -38,19 +38,4 @@ export const SHAPES: Record<PieceType, Field> = {
     [7, 7, 7],
     [0, 0, 0],
   ],
-}
-
-// ランダムな順番で7種類ずつ排出する7-bagを作る
-// 乱数を使うので純粋ではない。reducer の中ではなく、action を作る側（hooks）で呼ぶ
-export function randomPieceBag(): PieceType[] {
-  return shuffleArray(PIECE_TYPES)
-}
-
-function shuffleArray<T>(array: readonly T[]): T[] {
-  const clone = [...array]
-  for (let i = clone.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[clone[i]!, clone[j]!] = [clone[j]!, clone[i]!] // 要素を入れ替える
-  }
-  return clone
 }

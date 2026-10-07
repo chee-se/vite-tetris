@@ -7,11 +7,10 @@ import {
   type GameState,
 } from '@/game/reducer.ts'
 import type { PieceType } from '@/game/types.ts'
-import { randomPieceBag } from '@/game/tetrominoes.ts'
 
 // holdAction: ホールドの action を作る。hooks が送るときと同じ作り方にする
 function holdAction(): Action {
-  return { type: 'hold', nextBag: randomPieceBag() }
+  return { type: 'hold' }
 }
 // ホールド中のミノの種類を返す。ホールドが空なら undefined
 function heldType(state: GameState): PieceType | undefined {
@@ -22,14 +21,20 @@ function heldType(state: GameState): PieceType | undefined {
 
 type PlayingState = Extract<GameState, { status: 'playing' }>
 
-// 袋が空になったときに使う予備の袋。このテストでは使われない
-const SPARE_BAG: PieceType[] = ['L', 'J', 'Z', 'S', 'T', 'O', 'I']
+// タイトル画面。袋はゲームを始めるときに作られるので、seed だけを持つ
+function fixedTitle(): GameState {
+  return createTitleState(0)
+}
 
-// 最初の袋を固定してゲームを始める。
+// ゲームを始め、ミノの順番を決まった並びで上書きする。
 // current = T、next = I、袋の残り = O, S, Z, J, L
 function startGame(): PlayingState {
-  const title = createTitleState(['T', 'I', 'O', 'S', 'Z', 'J', 'L'])
-  return play(title, { type: 'start', nextBag: SPARE_BAG })
+  return {
+    ...play(fixedTitle(), { type: 'start' }),
+    current: spawnPiece('T'),
+    next: 'I',
+    bag: ['O', 'S', 'Z', 'J', 'L'],
+  }
 }
 
 // reducer を呼び、結果がまだ playing であることを確かめてから返す
@@ -43,10 +48,7 @@ const hold = (state: GameState) => play(state, holdAction())
 
 // 空のフィールドでハードドロップして、次のミノを出す
 const drop = (state: PlayingState) =>
-  play(
-    { ...state, field: createEmptyField() },
-    { type: 'hardDrop', nextBag: SPARE_BAG },
-  )
+  play({ ...state, field: createEmptyField() }, { type: 'hardDrop' })
 
 describe('ホールド: 空のホールドに入れる', () => {
   test('ゲーム開始時はホールドが空', () => {
@@ -113,7 +115,7 @@ describe('ホールド: 着地してもホールド中のミノは残る', () =>
   test('自然落下（tick）で固定しても残る', () => {
     let state: PlayingState = hold(startGame())
     state = { ...state, current: { ...state.current, y: 18 } }
-    state = play(state, { type: 'tick', nextBag: SPARE_BAG })
+    state = play(state, { type: 'tick' })
     expect(heldType(state)).toBe('T')
   })
 })
@@ -143,7 +145,7 @@ describe('ホールド: 1 つのミノにつき 1 回だけ', () => {
     let state: PlayingState = hold(startGame())
     // I を床まで落とし、tick で固定させる
     state = { ...state, current: { ...state.current, y: 18 } }
-    state = play(state, { type: 'tick', nextBag: SPARE_BAG })
+    state = play(state, { type: 'tick' })
     expect(state.current.type).toBe('O')
     expect(heldType(hold(state))).toBe('O')
   })
@@ -156,7 +158,7 @@ describe('ホールド: プレイ中以外', () => {
   })
 
   test('タイトル画面ではホールドできない', () => {
-    const title = createTitleState(['T', 'I', 'O', 'S', 'Z', 'J', 'L'])
+    const title = fixedTitle()
     expect(reducer(title, holdAction())).toEqual(title)
   })
 
@@ -164,7 +166,7 @@ describe('ホールド: プレイ中以外', () => {
     const state = hold(startGame())
     const { current: _, ...rest } = state
     const gameover = { ...rest, status: 'gameover' } as GameState
-    const restarted = play(gameover, { type: 'start', nextBag: SPARE_BAG })
+    const restarted = play(gameover, { type: 'start' })
     expect(heldType(restarted)).toBeUndefined()
   })
 })

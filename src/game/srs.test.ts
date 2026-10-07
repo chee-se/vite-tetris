@@ -15,6 +15,7 @@ const stateWith = (
   current,
   next: 'O',
   bag: ['I', 'T', 'S'],
+  rng: 1,
   score: 0,
   lines: 0,
   level: 1,

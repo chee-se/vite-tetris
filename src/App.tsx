@@ -3,42 +3,39 @@ import Board from '@/components/Board.tsx'
 import DebugPanel from '@/components/DebugPanel.tsx'
 import PiecePreview from '@/components/PiecePreview.tsx'
 import Overlay from '@/components/Overlay.tsx'
+import { OVERLAYS } from '@/components/overlays.ts'
 import Stats from '@/components/Stats.tsx'
-import { createTitleState, reducer, type GameState } from '@/game/reducer.ts'
+import { createTitleState, reducer } from '@/game/reducer.ts'
 import { dropIntervalMs } from '@/game/score.ts'
-import { randomPieceBag } from '@/game/tetrominoes.ts'
+import { randomSeed } from '@/game/random.ts'
 import type { PieceType } from '@/game/types.ts'
 import { useGameLoop } from '@/hooks/useGameLoop.ts'
 import { useKeyboard } from '@/hooks/useKeyboard.ts'
 import styles from './App.module.css'
-import logo from '@/assets/logo.svg'
 
 // import.meta.env.DEV は、vite build のときに false という定数に置き換わる。
 // そのため本番ビルドでは条件全体が false になり、DebugPanel はバンドルから取り除かれる
 const SHOW_DEBUG = import.meta.env.DEV && import.meta.env.VITE_DEBUG === 'true'
 
-// status ごとにフィールドへ重ねる表示。playing のときは何も重ねない
-const OVERLAYS: Record<
-  Exclude<GameState['status'], 'playing'>,
-  { title: string; message: string; image?: string }
-> = {
-  title: { title: 'TETRIS', message: 'Enter でスタート', image: logo },
-  paused: { title: 'PAUSE', message: 'P / Esc で再開' },
-  gameover: { title: 'GAME OVER', message: 'Enter でもう一度' },
-}
-
 function App() {
   // 第 3 引数の初期化関数は最初の 1 回だけ呼ばれる。
   // 乱数で最初のバッグを作るので、定数の initialState ではなく関数で作る
-  const [state, dispatch] = useReducer(reducer, undefined, () =>
-    createTitleState(randomPieceBag()),
-  )
-  const playingOrPaused =
-    state.status === 'playing' || state.status === 'paused'
+  const [state, dispatch] = useReducer(reducer, undefined, () => {
+    if (!import.meta.env.DEV) {
+      return createTitleState(randomSeed())
+    }
+    const urlParams = new URLSearchParams(window.location.search)
+    const paramSeed = Number(urlParams.get('seed') || NaN)
+    return createTitleState(
+      Number.isInteger(paramSeed) ? paramSeed : randomSeed(),
+    )
+  })
 
   useKeyboard(dispatch)
   useGameLoop(dispatch, dropIntervalMs(state.level), state.status === 'playing')
 
+  const playingOrPaused =
+    state.status === 'playing' || state.status === 'paused'
   const hold: PieceType | undefined = playingOrPaused ? state.hold : undefined
   const canHold: boolean | undefined = playingOrPaused
     ? state.canHold
@@ -65,7 +62,10 @@ function App() {
           )}
         </div>
         <div className={styles.side}>
-          <PiecePreview type={state.next} label={'NEXT'} />
+          <PiecePreview
+            type={playingOrPaused ? state.next : undefined}
+            label={'NEXT'}
+          />
           <Stats score={state.score} lines={state.lines} level={state.level} />
         </div>
       </div>

@@ -4,15 +4,19 @@
 
 技術方針：Vite + React + TypeScript、DOM 描画、SRS（Step 6 まではシンプル回転）。
 
-## ディレクトリ構成（予定）
+## ディレクトリ構成
 
 ```
 src/
 ├── game/          # React に依存しない純粋なゲームロジック（Vitest でテストする）
 │   ├── types.ts
-│   ├── tetrominoes.ts
+│   ├── tetrominoes.ts  # ミノの形
+│   ├── bag.ts          # 7-bag
+│   ├── random.ts       # seed つきの乱数
 │   ├── field.ts
 │   ├── piece.ts
+│   ├── srs.ts          # 壁蹴りの表
+│   ├── score.ts
 │   └── reducer.ts
 ├── hooks/         # ゲームループ・キー入力などのカスタムフック
 ├── components/    # 表示用の React コンポーネント
@@ -34,7 +38,7 @@ MVP（遊べるテトリス）は **Step 5 まで**。
 | 5 | ライン消去・スコア・レベル・ゲームオーバー | 状態遷移の設計（判別可能な union 型） | — | 完了 |
 | 6 | NEXT 表示・タイトル / 一時停止画面・見た目の調整 | コンポーネントの分割 | CSS Modules、静的アセット（`public/` と `import` の違い） | 完了 |
 | 7 | 発展要素（7-bag、ゴースト、ホールド、SRS など） | 好きなものを選んで追加する | 自作プラグイン（任意） | 完了 |
-| 8 | テストの拡充と Storybook（コンポーネントテスト・E2E・Storybook） | React Testing Library でのコンポーネントテスト、テストの層の分け方、テストのために乱数や時間を外から操作できる設計 | Vitest の `environment`（jsdom / Browser Mode）、Playwright の `webServer` で dev server を起動する、Storybook の `@storybook/react-vite`（Vite の設定を再利用する仕組み） | 未着手 |
+| 8 | テストの拡充と Storybook（コンポーネントテスト・E2E・Storybook） | React Testing Library でのコンポーネントテスト、テストの層の分け方、テストのために乱数や時間を外から操作できる設計 | Vitest の `environment`（jsdom / Browser Mode）、Playwright の `webServer` で dev server を起動する、Storybook の `@storybook/react-vite`（Vite の設定を再利用する仕組み） | 完了 |
 | 9 | ビルドと公開 | — | `vite build` の出力の中身（tree-shaking、コード分割）、`vite preview`、`base` の設定、GitHub Pages へのデプロイ | 未着手 |
 
 ## 各ステップの完了条件

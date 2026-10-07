@@ -8,6 +8,8 @@ type Props = {
 // 開発中に state の中身を見るための表示。本番ビルドには含めない（App.tsx を参照）
 function DebugPanel({ state }: Props) {
   const filled = state.field.flat().filter((cell) => cell !== 0).length
+  const playingOrPaused =
+    state.status === 'playing' || state.status === 'paused'
 
   return (
     <dl className={styles.debug}>
@@ -27,9 +29,9 @@ function DebugPanel({ state }: Props) {
       <dt>固定ブロック</dt>
       <dd>{filled} マス</dd>
       <dt>next</dt>
-      <dd>{state.next}</dd>
+      <dd>{playingOrPaused ? state.next : undefined}</dd>
       <dt>7-bag</dt>
-      <dd>{state.bag.join(', ')}</dd>
+      <dd>{playingOrPaused ? state.bag.join(', ') : undefined}</dd>
     </dl>
   )
 }

@@ -6,12 +6,13 @@ import {
   type Action,
   type GameState,
 } from '@/game/reducer.ts'
+import { drawPieceBag } from '@/game/bag.ts'
 import type { Piece, PieceType } from '@/game/types.ts'
 
 type PlayingState = Extract<GameState, { status: 'playing' }>
 
-// action に載せる新しい袋。袋が空になったときだけ使われる
-const NEW_BAG: PieceType[] = ['L', 'J', 'Z', 'S', 'T', 'O', 'I']
+// テストで使う乱数の状態。空の袋から取り出すときだけ、ここから次の袋が作られる
+const RNG = 1
 
 // next の既定値は 'O'。着地したテストでは O が出現する。
 // bag は、next のあとに出てくるミノの残り
@@ -26,6 +27,7 @@ const stateWith = (
   current,
   next,
   bag,
+  rng: RNG,
   score: 0,
   lines: 0,
   level: 1,
@@ -91,14 +93,14 @@ describe('reducer: 回転', () => {
 describe('reducer: tick', () => {
   test('下に動けるなら 1 マス落ちる。フィールドは変わらない', () => {
     const state = stateWith({ type: 'T', rotation: 0, x: 3, y: 5 })
-    const next = play(state, { type: 'tick', nextBag: NEW_BAG })
+    const next = play(state, { type: 'tick' })
     expect(next.current).toEqual({ ...state.current, y: 6 })
     expect(next.field).toBe(state.field)
   })
 
   test('下に動けないなら、その位置で固定する', () => {
     const state = stateWith({ type: 'T', rotation: 0, x: 3, y: 18 })
-    const next = play(state, { type: 'tick', nextBag: NEW_BAG })
+    const next = play(state, { type: 'tick' })
     expect(next.field).toEqual(lockPiece(state.field, state.current))
   })
 
@@ -109,33 +111,62 @@ describe('reducer: tick', () => {
       'S',
       ['Z', 'J'],
     )
-    const next = play(state, { type: 'tick', nextBag: NEW_BAG })
+    const next = play(state, { type: 'tick' })
     expect(next.current).toEqual(spawnPiece('S'))
     expect(next.next).toBe('Z')
     expect(next.bag).toEqual(['J'])
   })
 
-  test('袋の最後の 1 個を next にしたら、action の袋が新しい袋になる', () => {
+  test('袋の最後の 1 個を next にしても、まだ新しい袋は作らず、rng も進めない', () => {
     const state = stateWith(
       { type: 'T', rotation: 0, x: 3, y: 18 },
       undefined,
       'S',
       ['Z'],
     )
-    const next = play(state, { type: 'tick', nextBag: NEW_BAG })
+    const next = play(state, { type: 'tick' })
     expect(next.next).toBe('Z')
-    expect(next.bag).toEqual(NEW_BAG)
+    expect(next.bag).toEqual([])
+    expect(next.rng).toBe(RNG)
   })
 
-  test('袋に残りがあるうちは、action の袋を使わない', () => {
+  test('袋が空のときに固定したら、rng から新しい袋を作り、その先頭が next になる', () => {
+    const state = stateWith(
+      { type: 'T', rotation: 0, x: 3, y: 18 },
+      undefined,
+      'S',
+      [],
+    )
+    const next = play(state, { type: 'tick' })
+    const drawn = drawPieceBag(RNG)
+    expect(next.current).toEqual(spawnPiece('S'))
+    expect(next.next).toBe(drawn.bag[0])
+    expect(next.bag).toEqual(drawn.bag.slice(1))
+    expect(next.rng).toBe(drawn.rng)
+  })
+
+  test('袋に残りがあるうちは、rng を進めない', () => {
     const state = stateWith(
       { type: 'T', rotation: 0, x: 3, y: 18 },
       undefined,
       'S',
       ['Z', 'J'],
     )
-    const next = play(state, { type: 'tick', nextBag: NEW_BAG })
-    expect(next.bag).not.toContain('L')
+    const next = play(state, { type: 'tick' })
+    expect(next.rng).toBe(RNG)
+  })
+
+  test('固定しない tick では、袋が残り 0 個でも rng を進めない', () => {
+    // 袋の残りが 0 個のまま何度落ちても、ミノが出るまで乱数は使わない
+    const state = stateWith(
+      { type: 'T', rotation: 0, x: 3, y: 0 },
+      undefined,
+      'S',
+      [],
+    )
+    const next = play(state, { type: 'tick' })
+    expect(next.rng).toBe(RNG)
+    expect(next.bag).toEqual([])
   })
 
   test('固定しないうちは next も袋も変わらない', () => {
@@ -145,7 +176,7 @@ describe('reducer: tick', () => {
       'S',
       ['Z', 'J'],
     )
-    const next = play(state, { type: 'tick', nextBag: NEW_BAG })
+    const next = play(state, { type: 'tick' })
     expect(next.next).toBe('S')
     expect(next.bag).toBe(state.bag)
   })
@@ -154,7 +185,7 @@ describe('reducer: tick', () => {
     const field = createEmptyField()
     field[10]![4] = 1 // T の 2 行目の真下
     const state = stateWith({ type: 'T', rotation: 0, x: 3, y: 8 }, field, 'I')
-    const next = play(state, { type: 'tick', nextBag: NEW_BAG })
+    const next = play(state, { type: 'tick' })
     expect(next.field[9]).toEqual([0, 0, 0, 3, 3, 3, 0, 0, 0, 0])
     expect(next.current).toEqual(spawnPiece('I'))
   })
@@ -176,23 +207,20 @@ describe('reducer: 固定したあとのライン消去・スコア・ゲーム�
   const landingI: Piece = { type: 'I', rotation: 0, x: 0, y: 18 }
 
   test('固定して行がそろったら消す', () => {
-    const next = play(stateWith(landingI, almostFull()), {
-      type: 'tick',
-      nextBag: NEW_BAG,
-    })
+    const next = play(stateWith(landingI, almostFull()), { type: 'tick' })
     expect(next.field).toEqual(createEmptyField())
     expect(next.lines).toBe(1)
   })
 
   test('消した行数とレベルに応じて得点が入る', () => {
     const state = { ...stateWith(landingI, almostFull()), score: 50, level: 3 }
-    const next = play(state, { type: 'tick', nextBag: NEW_BAG })
+    const next = play(state, { type: 'tick' })
     expect(next.score).toBe(50 + 100 * 3)
   })
 
   test('得点は消す前のレベルで計算し、そのあと 10 ラインごとにレベルが上がる', () => {
     const state = { ...stateWith(landingI, almostFull()), lines: 9, level: 1 }
-    const next = play(state, { type: 'tick', nextBag: NEW_BAG })
+    const next = play(state, { type: 'tick' })
     expect(next.score).toBe(100)
     expect(next.lines).toBe(10)
     expect(next.level).toBe(2)
@@ -200,7 +228,7 @@ describe('reducer: 固定したあとのライン消去・スコア・ゲーム�
 
   test('行がそろわなければ、得点もライン数も変わらない', () => {
     const state = stateWith({ type: 'T', rotation: 0, x: 3, y: 18 })
-    const next = play(state, { type: 'tick', nextBag: NEW_BAG })
+    const next = play(state, { type: 'tick' })
     expect(next.score).toBe(0)
     expect(next.lines).toBe(0)
   })
@@ -209,7 +237,7 @@ describe('reducer: 固定したあとのライン消去・スコア・ゲーム�
     const field = createEmptyField()
     field[0]![4] = 1 // O の出現位置（x = 4〜5, y = 0〜1）をふさぐ
     const state = stateWith({ type: 'T', rotation: 0, x: 3, y: 18 }, field)
-    const next = reducer(state, { type: 'tick', nextBag: NEW_BAG })
+    const next = reducer(state, { type: 'tick' })
     expect(next.status).toBe('gameover')
     // gameover の型には current がない。前の state の current が残っていないこと
     expect(next).not.toHaveProperty('current')
@@ -221,7 +249,7 @@ describe('reducer: 固定したあとのライン消去・スコア・ゲーム�
     const { current: _, ...rest } = stateWith(landingI)
     const state: GameState = { ...rest, status: 'gameover' }
     expect(reducer(state, { type: 'left' })).toBe(state)
-    expect(reducer(state, { type: 'tick', nextBag: NEW_BAG })).toBe(state)
+    expect(reducer(state, { type: 'tick' })).toBe(state)
   })
 })
 
@@ -233,12 +261,12 @@ describe('reducer: ドロップの得点', () => {
 
   test('tick（自然落下）では得点が増えない', () => {
     const state = stateWith({ type: 'T', rotation: 0, x: 3, y: 5 })
-    expect(play(state, { type: 'tick', nextBag: NEW_BAG }).score).toBe(0)
+    expect(play(state, { type: 'tick' }).score).toBe(0)
   })
 
   test('ハードドロップは一番下まで落として、すぐ固定する', () => {
     const state = stateWith({ type: 'T', rotation: 0, x: 3, y: 0 })
-    const next = play(state, { type: 'hardDrop', nextBag: NEW_BAG })
+    const next = play(state, { type: 'hardDrop' })
     expect(next.field[19]).toEqual([0, 0, 0, 3, 3, 3, 0, 0, 0, 0])
     expect(next.current).toEqual(spawnPiece('O'))
   })
@@ -250,7 +278,7 @@ describe('reducer: ドロップの得点', () => {
       'S',
       ['Z', 'J'],
     )
-    const next = play(state, { type: 'hardDrop', nextBag: NEW_BAG })
+    const next = play(state, { type: 'hardDrop' })
     expect(next.next).toBe('Z')
     expect(next.bag).toEqual(['J'])
   })
@@ -258,14 +286,14 @@ describe('reducer: ドロップの得点', () => {
   test('ハードドロップは落とした距離 1 マスごとに +2', () => {
     // y = 0 から y = 18 まで 18 マス落ちる
     const state = stateWith({ type: 'T', rotation: 0, x: 3, y: 0 })
-    expect(play(state, { type: 'hardDrop', nextBag: NEW_BAG }).score).toBe(36)
+    expect(play(state, { type: 'hardDrop' }).score).toBe(36)
   })
 
   test('ハードドロップで行がそろえば、ライン消去の得点も足す', () => {
     const field = createEmptyField()
     field[19] = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
     const state = stateWith({ type: 'I', rotation: 0, x: 0, y: 0 }, field)
-    const next = play(state, { type: 'hardDrop', nextBag: NEW_BAG })
+    const next = play(state, { type: 'hardDrop' })
     expect(next.score).toBe(18 * 2 + 100)
     expect(next.lines).toBe(1)
   })
@@ -274,43 +302,40 @@ describe('reducer: ドロップの得点', () => {
     const field = createEmptyField()
     field[0]![4] = 1 // O の出現位置をふさぐ
     const state = stateWith({ type: 'T', rotation: 0, x: 3, y: 10 }, field)
-    const next = reducer(state, { type: 'hardDrop', nextBag: NEW_BAG })
+    const next = reducer(state, { type: 'hardDrop' })
     expect(next.status).toBe('gameover')
   })
 })
 
 describe('reducer: タイトルとスタート', () => {
-  const TITLE_BAG: PieceType[] = ['J', 'I', 'O', 'T', 'S', 'Z', 'L']
+  const SEED = 42
+  // seed から作られる最初の袋（7 個）と、そのあとの rng
+  const first = drawPieceBag(SEED)
 
-  test('タイトル画面の state は空のフィールドで、渡した袋の先頭が next、残りが袋になる', () => {
-    expect(createTitleState(TITLE_BAG)).toEqual({
+  test('タイトル画面の state は空のフィールドで、袋は持たず、seed を rng として持つ', () => {
+    expect(createTitleState(SEED)).toEqual({
       status: 'title',
       field: createEmptyField(),
-      next: 'J',
-      bag: ['I', 'O', 'T', 'S', 'Z', 'L'],
+      rng: SEED,
       score: 0,
       lines: 0,
       level: 1,
     })
   })
 
-  test('createTitleState は渡した袋を書き換えない', () => {
-    const bag = [...TITLE_BAG]
-    createTitleState(bag)
-    expect(bag).toEqual(TITLE_BAG)
+  test('同じ seed なら同じタイトル画面の state になる', () => {
+    expect(createTitleState(SEED)).toEqual(createTitleState(SEED))
   })
 
-  test('タイトルから start すると、next のミノが出て、タイトルの袋の続きを使う', () => {
-    const next = play(createTitleState(TITLE_BAG), {
-      type: 'start',
-      nextBag: NEW_BAG,
-    })
+  test('タイトルから start すると、rng から袋を作り、先頭のミノが出て、2 つ目が next になる', () => {
+    const next = play(createTitleState(SEED), { type: 'start' })
     expect(next).toEqual({
       status: 'playing',
       field: createEmptyField(),
-      current: spawnPiece('J'),
-      next: 'I',
-      bag: ['O', 'T', 'S', 'Z', 'L'],
+      current: spawnPiece(first.bag[0]!),
+      next: first.bag[1],
+      bag: first.bag.slice(2),
+      rng: first.rng,
       score: 0,
       lines: 0,
       level: 1,
@@ -319,26 +344,25 @@ describe('reducer: タイトルとスタート', () => {
   })
 
   test('タイトル中は start 以外の action で state が変わらない', () => {
-    const state = createTitleState(TITLE_BAG)
+    const state = createTitleState(SEED)
     expect(reducer(state, { type: 'left' })).toBe(state)
-    expect(reducer(state, { type: 'tick', nextBag: NEW_BAG })).toBe(state)
+    expect(reducer(state, { type: 'tick' })).toBe(state)
     expect(reducer(state, { type: 'pause' })).toBe(state)
   })
 
-  // どのミノから始まるか（袋の扱い）は bag.test.ts の test.todo で決める
   test('ゲームオーバーから start すると、空のフィールドで最初から始まる', () => {
     const field = createEmptyField()
     field[19]![0] = 1
     const state: GameState = {
       status: 'gameover',
       field,
-      next: 'T',
-      bag: ['S', 'Z'],
+      rng: RNG,
       score: 1200,
       lines: 12,
       level: 2,
     }
-    const next = play(state, { type: 'start', nextBag: NEW_BAG })
+    const next = play(state, { type: 'start' })
+    const drawn = drawPieceBag(RNG)
     expect(next).toMatchObject({
       status: 'playing',
       field: createEmptyField(),
@@ -346,11 +370,16 @@ describe('reducer: タイトルとスタート', () => {
       lines: 0,
       level: 1,
     })
+    // rng から新しい袋を作る
+    expect(next.current).toEqual(spawnPiece(drawn.bag[0]!))
+    expect(next.next).toBe(drawn.bag[1])
+    expect(next.bag).toEqual(drawn.bag.slice(2))
+    expect(next.rng).toBe(drawn.rng)
   })
 
   test('プレイ中の start は何もしない', () => {
     const state = stateWith({ type: 'T', rotation: 0, x: 3, y: 5 })
-    expect(reducer(state, { type: 'start', nextBag: NEW_BAG })).toBe(state)
+    expect(reducer(state, { type: 'start' })).toBe(state)
   })
 })
 
@@ -374,9 +403,9 @@ describe('reducer: 一時停止', () => {
       type: 'pause',
     })
     expect(reducer(paused, { type: 'left' })).toBe(paused)
-    expect(reducer(paused, { type: 'tick', nextBag: NEW_BAG })).toBe(paused)
-    expect(reducer(paused, { type: 'hardDrop', nextBag: NEW_BAG })).toBe(paused)
-    expect(reducer(paused, { type: 'start', nextBag: NEW_BAG })).toBe(paused)
+    expect(reducer(paused, { type: 'tick' })).toBe(paused)
+    expect(reducer(paused, { type: 'hardDrop' })).toBe(paused)
+    expect(reducer(paused, { type: 'start' })).toBe(paused)
   })
 
   test('ゲームオーバー中の pause は何もしない', () => {
@@ -396,13 +425,7 @@ test('元の state を書き換えない', () => {
   const before = structuredClone(state)
   reducer(state, { type: 'right' })
   reducer(state, { type: 'rotateRight' })
-  reducer(state, { type: 'tick', nextBag: NEW_BAG })
-  reducer(
-    { ...state, current: { ...state.current, y: 18 } },
-    {
-      type: 'tick',
-      nextBag: NEW_BAG,
-    },
-  )
+  reducer(state, { type: 'tick' })
+  reducer({ ...state, current: { ...state.current, y: 18 } }, { type: 'tick' })
   expect(state).toEqual(before)
 })

@@ -23,3 +23,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Vitest Browser Mode の失敗時スクリーンショット
+.vitest
+
+# Playwright の結果とレポート
+/test-results/
+/playwright-report/
+/playwright/.cache/
+
+# Storybook のビルド結果
+/storybook-static/
