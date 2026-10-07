@@ -1,32 +1,39 @@
-import { expect, test, type Page } from '@playwright/test'
-
-test('Enter でタイトルからゲームを始められる', async ({ page }) => {
-  await page.goto('/')
-
-  // タイトル画面のオーバーレイが出ている
-  await expect(page.getByText('Enter でスタート')).toBeVisible()
-
-  await page.keyboard.press('Enter')
-
-  // プレイ中はオーバーレイが消える
-  await expect(page.getByText('Enter でスタート')).toBeHidden()
-})
+import { expect, test, type Locator, type Page } from '@playwright/test'
 
 async function startGame(url: string, page: Page) {
   await page.goto(url)
+  // タイトル画面のオーバーレイが出ている
   await expect(page.getByText('Enter でスタート')).toBeVisible()
   await page.keyboard.press('Enter')
+  // プレイ中はオーバーレイが消える
   await expect(page.getByText('Enter でスタート')).toBeHidden()
 }
 
-async function nextCells(page: Page): Promise<(string | null)[]> {
-  const next = page.locator('section', {
-    has: page.getByRole('heading', { name: 'NEXT' }),
+// HOLD / NEXT の枠に表示されているセルの data-cell を、並び順のまま返す。
+// 何も表示されていないときは空の配列になる
+async function previewCells(
+  page: Page,
+  label: 'HOLD' | 'NEXT',
+): Promise<(string | null)[]> {
+  const preview = page.locator('section', {
+    has: page.getByRole('heading', { name: label }),
   })
-  return next
+  return preview
     .locator('[data-cell]')
     .evaluateAll((els) => els.map((el) => el.getAttribute('data-cell')))
 }
+
+function holdDisabledFrame(page: Page): Locator {
+  return page
+    .locator('section', {
+      has: page.getByRole('heading', { name: 'HOLD' }),
+    })
+    .locator('[data-disabled]')
+}
+
+test('Enter でタイトルからゲームを始められる', async ({ page }) => {
+  await startGame('/', page)
+})
 
 test('固定 seed のとき、ミノが固定される', async ({ page }) => {
   await startGame('/?seed=42', page)
@@ -34,7 +41,7 @@ test('固定 seed のとき、ミノが固定される', async ({ page }) => {
   const cell1 = []
   for (let i = 0; i < 5; i++) {
     await page.keyboard.press('Space')
-    cell1.push(await nextCells(page))
+    cell1.push(await previewCells(page, 'NEXT'))
   }
 
   await startGame('/?seed=42', page)
@@ -42,7 +49,7 @@ test('固定 seed のとき、ミノが固定される', async ({ page }) => {
   const cell2 = []
   for (let i = 0; i < 5; i++) {
     await page.keyboard.press('Space')
-    cell2.push(await nextCells(page))
+    cell2.push(await previewCells(page, 'NEXT'))
   }
   expect(cell1).toEqual(cell2)
 })
@@ -53,7 +60,7 @@ test('seed が変わると、違うミノが出現する', async ({ page }) => {
   const cell1 = []
   for (let i = 0; i < 5; i++) {
     await page.keyboard.press('Space')
-    cell1.push(await nextCells(page))
+    cell1.push(await previewCells(page, 'NEXT'))
   }
 
   await startGame('/?seed=2', page)
@@ -61,7 +68,57 @@ test('seed が変わると、違うミノが出現する', async ({ page }) => {
   const cell2 = []
   for (let i = 0; i < 5; i++) {
     await page.keyboard.press('Space')
-    cell2.push(await nextCells(page))
+    cell2.push(await previewCells(page, 'NEXT'))
   }
   expect(cell1).not.toEqual(cell2)
+})
+
+test('C でホールドすると、HOLD にミノが入る', async ({ page }) => {
+  const disabledFrame = holdDisabledFrame(page)
+
+  await startGame('/?seed=42', page)
+  // スタート直後はHOLDが空
+  const beforeHold = await previewCells(page, 'HOLD')
+  expect(beforeHold).toEqual([])
+  // ホールド
+  await page.keyboard.press('c')
+  await expect(disabledFrame).toHaveCount(1)
+  const afterHold = await previewCells(page, 'HOLD')
+
+  expect(beforeHold).not.toEqual(afterHold)
+})
+
+test('C でホールドすると、連続ホールド不能になり、ミノ落下後に戻る', async ({
+  page,
+}) => {
+  const disabledFrame = holdDisabledFrame(page)
+
+  await startGame('/?seed=42', page)
+  // ホールド可能
+  await expect(disabledFrame).toHaveCount(0)
+
+  // ホールドするとホールド不可能に切り替わる
+  // 1回目
+  await page.keyboard.press('c')
+  await expect(disabledFrame).toHaveCount(1)
+  const held1 = await previewCells(page, 'HOLD')
+  // 2回目（無効）
+  await page.keyboard.press('c')
+  await expect(disabledFrame).toHaveCount(1)
+  await expect.poll(() => previewCells(page, 'HOLD')).toEqual(held1)
+  // 3回目（ハードドロップ後。有効）
+  await page.keyboard.press('Space')
+  await expect(disabledFrame).toHaveCount(0)
+  await page.keyboard.press('c')
+  await expect.poll(() => previewCells(page, 'HOLD')).not.toEqual(held1)
+})
+
+test('C でホールドすると、落下中のミノをホールドする', async ({ page }) => {
+  await startGame('/?seed=42', page)
+  // next から次に落下するミノを取得し、ハードドロップで出現させる
+  const currentCells = await previewCells(page, 'NEXT')
+  await page.keyboard.press('Space')
+  await expect.poll(() => previewCells(page, 'NEXT')).not.toEqual(currentCells)
+  await page.keyboard.press('c')
+  await expect.poll(() => previewCells(page, 'HOLD')).toEqual(currentCells)
 })
