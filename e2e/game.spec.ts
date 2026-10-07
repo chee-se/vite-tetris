@@ -73,6 +73,15 @@ test('seed が変わると、違うミノが出現する', async ({ page }) => {
   expect(cell1).not.toEqual(cell2)
 })
 
+// フィールドの全セルの data-cell を、上の行から順に返す。
+// 落下中のミノとゴーストも含むので、ミノが動けば中身が変わる
+async function boardCells(page: Page): Promise<(string | null)[]> {
+  return page
+    .getByTestId('board')
+    .locator('[data-cell]')
+    .evaluateAll((els) => els.map((el) => el.getAttribute('data-cell')))
+}
+
 test('C でホールドすると、HOLD にミノが入る', async ({ page }) => {
   const disabledFrame = holdDisabledFrame(page)
 
@@ -121,4 +130,22 @@ test('C でホールドすると、落下中のミノをホールドする', asy
   await expect.poll(() => previewCells(page, 'NEXT')).not.toEqual(currentCells)
   await page.keyboard.press('c')
   await expect.poll(() => previewCells(page, 'HOLD')).toEqual(currentCells)
+})
+
+test('一時停止している間は、時間がたってもミノが落ちない', async ({ page }) => {
+  // 時計を偽物に差し替える。アプリが読み込まれる前（page.goto より前）に呼ぶ
+  await page.clock.install()
+  await startGame('/?seed=42', page)
+
+  // ポーズ
+  await page.keyboard.press('p')
+  await expect(page.getByText('PAUSE', { exact: true })).toBeVisible()
+  const currentCells = await boardCells(page)
+  await page.clock.runFor(5000)
+  await expect(await boardCells(page)).toEqual(currentCells)
+  // ポーズ解除
+  await page.keyboard.press('p')
+  await expect(page.getByText('PAUSE', { exact: true })).not.toBeVisible()
+  await page.clock.runFor(2000)
+  await expect.poll(() => boardCells(page)).not.toEqual(currentCells)
 })

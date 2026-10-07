@@ -30,7 +30,8 @@ function Board({ field, current }: Props) {
   const ghost = current ? overlay(field, dropToLand(field, current)) : field
   const cells = current ? overlay(field, current) : field
   return (
-    <div className={styles.board}>
+    // data-testid は E2E でフィールドを探すための目印（page.getByTestId('board')）
+    <div className={styles.board} data-testid="board">
       {cells.map((row, y) =>
         row.map((cell, x) => {
           const ghostCell = ghost[y]?.[x] ?? 0
