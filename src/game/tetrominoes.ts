@@ -1,3 +1,4 @@
+import { nextRandom } from './random.ts'
 import { PIECE_TYPES, type Field, type PieceType } from './types.ts'
 
 // 出現時（rotation = 0）の形。回転しても箱の大きさが変わらないよう正方形で持つ
@@ -41,12 +42,24 @@ export const SHAPES: Record<PieceType, Field> = {
 }
 
 // ランダムな順番で7種類ずつ排出する7-bagを作る
-// random を省略すると Math.random を使うので純粋ではない。reducer の中ではなく、action を作る側（hooks）で呼ぶ。
+// random を省略すると Math.random を使うので純粋ではない。
 // テストでは random に決まった値を返す関数を渡すと、順番を決められる
 export function randomPieceBag(
   random: () => number = Math.random,
 ): PieceType[] {
   return shuffleArray(random, PIECE_TYPES)
+}
+
+// 乱数の状態 rng から次の袋を作り、袋と進めた rng を返す。
+// rng を値として受け取って返すので純粋。reducer の中で呼べる
+export function drawPieceBag(rng: number): { bag: PieceType[]; rng: number } {
+  let current = rng
+  const bag = randomPieceBag(() => {
+    const [value, next] = nextRandom(current)
+    current = next
+    return value
+  })
+  return { bag, rng: current }
 }
 
 function shuffleArray<T>(random: () => number, array: readonly T[]): T[] {

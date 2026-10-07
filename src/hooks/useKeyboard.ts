@@ -1,8 +1,7 @@
 import { useEffect, type Dispatch } from 'react'
 import { ACTION_TYPES, type ActionType, type Action } from '@/game/reducer.ts'
-import { randomPieceBag } from '@/game/tetrominoes.ts'
 
-// nextBag を持つ action。押したときに次のミノを乱数で並べたバッグを送る
+// 押したときに次のミノをだすアクション。キーリピートを防止する
 const SPAWN_ACTION_TYPES = ['hardDrop', 'start', 'hold'] as const
 type SpawnActionType = (typeof SPAWN_ACTION_TYPES)[number]
 
@@ -38,7 +37,7 @@ export function useKeyboard(dispatch: Dispatch<Action>): void {
         e.preventDefault()
         // 押しっぱなしのキーリピートで、ハードドロップが連続しないようにする
         if (e.repeat) return
-        dispatch({ type: spawnType, nextBag: randomPieceBag() })
+        dispatch({ type: spawnType })
         return
       }
       if (PAUSE_KEYS.includes(key)) {

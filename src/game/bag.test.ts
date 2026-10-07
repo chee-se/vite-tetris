@@ -6,23 +6,23 @@ import {
   type Action,
   type GameState,
 } from '@/game/reducer.ts'
+import { randomSeed } from '@/game/random.ts'
 import { randomPieceBag } from '@/game/tetrominoes.ts'
 import { PIECE_TYPES, type PieceType } from '@/game/types.ts'
 
-// タイトル画面の state を作る。
-function titleState(): GameState {
-  return createTitleState(randomPieceBag())
+// タイトル画面の state を作る。seed は毎回ランダムにして、いろいろな袋で試す
+function titleState(seed = randomSeed()): GameState {
+  return createTitleState(seed)
 }
 
 // type の action を作る。hooks と同じ作り方にする。
-function makeAction(type: 'start' | 'hardDrop' | 'pause'): Action {
-  if (type === 'pause') return { type }
-  return { type: type, nextBag: randomPieceBag() }
+function makeAction(type: 'start' | 'hardDrop' | 'pause' | 'tick'): Action {
+  return { type }
 }
 
 const sortedTypes = [...PIECE_TYPES].toSorted()
 
-function send(state: GameState, type: 'start' | 'hardDrop' | 'pause') {
+function send(state: GameState, type: 'start' | 'hardDrop' | 'pause' | 'tick') {
   return reducer(state, makeAction(type))
 }
 
@@ -38,7 +38,7 @@ function currentType(state: GameState): PieceType {
 function collect(
   state: GameState,
   count: number,
-  between: ('start' | 'hardDrop' | 'pause')[] = [],
+  between: ('start' | 'hardDrop' | 'pause' | 'tick')[] = [],
 ): PieceType[] {
   const pieces: PieceType[] = [currentType(state)]
   while (pieces.length < count) {
@@ -52,9 +52,10 @@ function collect(
 // 新しいゲームを始め、出てきたミノを順に count 個集める
 function takePieces(
   count: number,
-  between: ('start' | 'hardDrop' | 'pause')[] = [],
+  between: ('start' | 'hardDrop' | 'pause' | 'tick')[] = [],
+  seed = randomSeed(),
 ): PieceType[] {
-  return collect(send(titleState(), 'start'), count, between)
+  return collect(send(titleState(seed), 'start'), count, between)
 }
 
 // pieces を 7 個ずつに区切る（端数は捨てる）
@@ -166,6 +167,26 @@ describe('無視される action では袋が減らない', () => {
     for (const chunk of chunksOf7(takePieces(70, [...between]))) {
       expect(chunk.toSorted()).toEqual(sortedTypes)
     }
+  })
+})
+
+// E2E で ?seed= を使ってミノの順番を決めるための性質
+describe('同じ seed なら同じ順番でミノが出る', () => {
+  test('同じ seed で 2 回遊ぶと、同じ順番になる', () => {
+    expect(takePieces(30, [], 42)).toEqual(takePieces(30, [], 42))
+  })
+
+  test('違う seed なら、違う順番になる', () => {
+    expect(takePieces(30, [], 1)).not.toEqual(takePieces(30, [], 2))
+  })
+
+  test('ミノとミノの間に落下（tick）が何回あっても、順番は変わらない', () => {
+    // tick の回数は時間で決まる。時間によって乱数の使い方が変わると、同じ seed でも順番がずれる
+    const none = takePieces(30, [], 42)
+    expect(takePieces(30, ['tick'], 42)).toEqual(none)
+    expect(
+      takePieces(30, ['tick', 'tick', 'tick', 'tick', 'tick'], 42),
+    ).toEqual(none)
   })
 })
 

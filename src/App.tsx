@@ -6,7 +6,7 @@ import Overlay from '@/components/Overlay.tsx'
 import Stats from '@/components/Stats.tsx'
 import { createTitleState, reducer, type GameState } from '@/game/reducer.ts'
 import { dropIntervalMs } from '@/game/score.ts'
-import { randomPieceBag } from '@/game/tetrominoes.ts'
+import { randomSeed } from '@/game/random.ts'
 import type { PieceType } from '@/game/types.ts'
 import { useGameLoop } from '@/hooks/useGameLoop.ts'
 import { useKeyboard } from '@/hooks/useKeyboard.ts'
@@ -30,15 +30,22 @@ const OVERLAYS: Record<
 function App() {
   // 第 3 引数の初期化関数は最初の 1 回だけ呼ばれる。
   // 乱数で最初のバッグを作るので、定数の initialState ではなく関数で作る
-  const [state, dispatch] = useReducer(reducer, undefined, () =>
-    createTitleState(randomPieceBag()),
-  )
-  const playingOrPaused =
-    state.status === 'playing' || state.status === 'paused'
+  const [state, dispatch] = useReducer(reducer, undefined, () => {
+    if (!import.meta.env.DEV) {
+      return createTitleState(randomSeed())
+    }
+    const urlParams = new URLSearchParams(window.location.search)
+    const paramSeed = Number(urlParams.get('seed') || NaN)
+    return createTitleState(
+      Number.isInteger(paramSeed) ? paramSeed : randomSeed(),
+    )
+  })
 
   useKeyboard(dispatch)
   useGameLoop(dispatch, dropIntervalMs(state.level), state.status === 'playing')
 
+  const playingOrPaused =
+    state.status === 'playing' || state.status === 'paused'
   const hold: PieceType | undefined = playingOrPaused ? state.hold : undefined
   const canHold: boolean | undefined = playingOrPaused
     ? state.canHold
@@ -65,7 +72,10 @@ function App() {
           )}
         </div>
         <div className={styles.side}>
-          <PiecePreview type={state.next} label={'NEXT'} />
+          <PiecePreview
+            type={playingOrPaused ? state.next : undefined}
+            label={'NEXT'}
+          />
           <Stats score={state.score} lines={state.lines} level={state.level} />
         </div>
       </div>
